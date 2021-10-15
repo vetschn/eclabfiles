@@ -50,8 +50,8 @@ def mpr_to_df(mpr_path: str) -> pd.DataFrame:
 
     """
     mpr = parse_mpr(mpr_path)
-    mpr_records = mpr[1]['data']['datapoints']
-    mpr_df = pd.DataFrame.from_dict(mpr_records, orient='index')
+    mpr_records = mpr[1]['data']['data_points']
+    mpr_df = pd.DataFrame.from_dict(mpr_records)
     return mpr_df
 
 
@@ -70,7 +70,8 @@ def mpr_to_csv(mpr_path: str, csv_path: str = None) -> None:
     mpr_df = mpr_to_df(mpr_path)
     if csv_path:
         mpr_df.to_csv(csv_path, float_format='%.15f')
-    mpr_df.to_csv(_construct_path(mpr_path, '.csv'), float_format='%.15f')
+    mpr_df.to_csv(_construct_path(mpr_path, '.csv'), float_format='%.15f',
+                  index=False)
 
 
 def mpr_to_xlsx(mpr_path: str, excel_path: str = None) -> None:
@@ -87,8 +88,8 @@ def mpr_to_xlsx(mpr_path: str, excel_path: str = None) -> None:
     """
     mpr_df = mpr_to_df(mpr_path)
     if excel_path:
-        mpr_df.to_excel(excel_path)
-    mpr_df.to_excel(_construct_path(mpr_path, '.xlsx'))
+        mpr_df.to_excel(excel_path, index=False)
+    mpr_df.to_excel(_construct_path(mpr_path, '.xlsx'), index=False)
 
 
 def mpt_to_df(mpt_path: str) -> pd.DataFrame:
@@ -107,7 +108,7 @@ def mpt_to_df(mpt_path: str) -> pd.DataFrame:
     """
     mpt = parse_mpt(mpt_path)
     mpt_records = mpt['data']
-    mpt_df = pd.DataFrame.from_dict(mpt_records, orient='index')
+    mpt_df = pd.DataFrame.from_dict(mpt_records)
     return mpt_df
 
 
@@ -125,8 +126,9 @@ def mpt_to_csv(mpt_path: str, csv_path: str = None) -> None:
     """
     mpt_df = mpr_to_df(mpt_path)
     if csv_path:
-        mpt_df.to_csv(csv_path, float_format='%.15f')
-    mpt_df.to_csv(_construct_path(mpt_path, '.csv'), float_format='%.15f')
+        mpt_df.to_csv(csv_path, float_format='%.15f', index=False)
+    mpt_df.to_csv(_construct_path(mpt_path, '.csv'), float_format='%.15f',
+                  index=False)
 
 
 def mpt_to_xlsx(mpt_path: str, excel_path: str = None) -> None:
@@ -143,8 +145,8 @@ def mpt_to_xlsx(mpt_path: str, excel_path: str = None) -> None:
     """
     mpt_df = mpr_to_df(mpt_path)
     if excel_path:
-        mpt_df.to_excel(excel_path)
-    mpt_df.to_excel(_construct_path(mpt_path, '.xlsx'))
+        mpt_df.to_excel(excel_path, index=False)
+    mpt_df.to_excel(_construct_path(mpt_path, '.xlsx'), index=False)
 
 
 def mps_to_dfs(mps_path: str) -> list[pd.DataFrame]:
@@ -171,11 +173,11 @@ def mps_to_dfs(mps_path: str) -> list[pd.DataFrame]:
         # It's intentional to prefer MPT over MPR files.
         if 'mpt' in data.keys():
             mpt_records = data['mpt']['data']
-            mpt_df = pd.DataFrame.from_dict(mpt_records, orient='index')
+            mpt_df = pd.DataFrame.from_dict(mpt_records)
             dfs.append(mpt_df)
         elif 'mpr' in data.keys():
             mpr_records = data['mpr'][1]['data']['datapoints']
-            mpr_df = pd.DataFrame.from_dict(mpr_records, orient='index')
+            mpr_df = pd.DataFrame.from_dict(mpr_records)
             dfs.append(mpr_df)
     return dfs
 
@@ -199,10 +201,10 @@ def mps_to_csv(mps_path: str, csv_path: str = None) -> None:
         if csv_path:
             df.to_csv(
                 _construct_path(csv_path, f'_{i+1:02d}.csv'),
-                float_format='%.15f')
+                float_format='%.15f', index=False)
         df.to_csv(
             _construct_path(mps_path, f'_{i+1:02d}.csv'),
-            float_format='%.15f')
+            float_format='%.15f', index=False)
 
 
 def mps_to_xlsx(mps_path: str, excel_path: str = None):
@@ -223,7 +225,7 @@ def mps_to_xlsx(mps_path: str, excel_path: str = None):
         excel_path = _construct_path(mps_path, '.xlsx')
     with pd.ExcelWriter(excel_path) as writer:
         for i, df in enumerate(dfs):
-            df.to_excel(writer, sheet_name=f'{i+1:02d}')
+            df.to_excel(writer, sheet_name=f'{i+1:02d}' , index=False)
 
 
 def _parse_arguments() -> argparse.Namespace:
@@ -263,3 +265,7 @@ def _run():
 
 if __name__ == '__main__':
     _run()
+
+
+# TODO: to_df, to_csv, to_xlsx
+# TODO:

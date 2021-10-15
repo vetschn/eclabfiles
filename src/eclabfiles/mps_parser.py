@@ -104,7 +104,6 @@ def _load_technique_data(
         for technique in techniques:
             if technique['technique'] in {'Wait', 'Loop'}:
                 continue
-            print(i)
             technique['data']['mpr'] = parse_mpr(mpr_paths[i])
             i += 1
     # Parse any MPT files.
@@ -115,7 +114,6 @@ def _load_technique_data(
         for technique in techniques:
             if technique['technique'] in {'Wait', 'Loop'}:
                 continue
-            print(i)
             technique['data']['mpt'] = parse_mpt(mpt_paths[i])
             i += 1
     return techniques
@@ -156,8 +154,6 @@ def parse_mps(path: str, load_data: bool = False) -> dict:
     base_path, __ = os.path.splitext(path)
     mpr_paths = glob.glob(base_path + '*.mpr')
     mpt_paths = glob.glob(base_path + '*.mpt')
-    print(mpt_paths)
-    print(mpr_paths)
     if (load_data and (mpr_paths or mpt_paths)):
         techniques = _load_technique_data(techniques, mpr_paths, mpt_paths)
     return {'header': header, 'techniques': techniques}

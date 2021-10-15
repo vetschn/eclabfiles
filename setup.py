@@ -14,8 +14,8 @@ setuptools.setup(
     url = "https://github.com/vetschn/eclabfiles",
     classifiers = ["Programming Language :: Python :: 3",],
     package_dir={"": "src"},
-    packages = setuptools.find_packages(include=["eclabfiles", "eclabfiles."]),
-    install_requires = ["numpy", "pandas"],
+    packages = setuptools.find_packages(include=["eclabfiles"]),
+    install_requires = ["numpy", "pandas", "openpyxl"],
     python_requires = ">=3.8",
     entry_points = {"console_scripts": ['eclabfiles=eclabfiles.main']},
 )

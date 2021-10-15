@@ -20,6 +20,7 @@ from datetime import datetime, timedelta
 from io import TextIOWrapper
 from typing import Any
 
+import pandas as pd
 import numpy as np
 from numpy.lib import recfunctions as rfn
 
@@ -416,6 +417,8 @@ def _parse_data(data: bytes, version: int) -> dict:
         data_points = rfn.merge_arrays(
             [flag_values, data_points],
             flatten=True)
+        data_points = pd.DataFrame.from_records(data_points)
+        data_points = data_points.to_dict(orient='records')
     data = {
         'n_data_points': n_data_points,
         'n_columns': n_columns,
