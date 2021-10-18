@@ -316,16 +316,11 @@ def _parse_settings(data: bytes) -> dict:
         settings[name] = _read_value(data, offset, dtype)
     # Then determine the technique parameters. The parameters' offset
     # changes depending on the technique present.
-    if technique == 'ZIR':
-        params_offset = 0x0572
-    elif technique == 'MB':
-        params_offset = 0x1846
-    else:
-        params_offset = 0x1845
-    ns = _read_value(data, params_offset, '<u2')
-    n_params = _read_value(data, params_offset+0x0002, '<u2')
-    assert(len(params_dtype) == n_params), \
-        "The number of parameters do not match."
+    for params_offset in {0x0572, 0x1846, 0x1845}:
+        ns = _read_value(data, params_offset, '<u2')
+        n_params = _read_value(data, params_offset+0x0002, '<u2')
+        if len(params_dtype) == n_params:
+            break
     params_array = _read_values(data, params_offset+0x0004, params_dtype, ns)
     params = []
     for n in range(ns):
