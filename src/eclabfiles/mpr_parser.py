@@ -58,13 +58,13 @@ settings_dtypes = {
 # Maps the flag column ID bytes to the corresponding dtype and bitmask.
 flag_column_dtypes = {
     0x0001: ('mode', '|u1', 0x03),
-    0x0002: ('ox/red', '|b1', 0x04),
-    0x0003: ('error', '|b1', 0x08),
-    0x0015: ('control changes', '|b1', 0x10),
-    0x001F: ('Ns changes', '|b1', 0x20),
+    0x0002: ('ox/red', '|u1', 0x04),
+    0x0003: ('error', '|u1', 0x08),
+    0x0015: ('control changes', '|u1', 0x10),
+    0x001F: ('Ns changes', '|u1', 0x20),
     # NOTE: I think the missing bitmask (0x40) is a stop bit. It
     # appears in the flag bytes of the very last data point.
-    0x0041: ('counter inc.', '|b1', 0x80),
+    0x0041: ('counter inc.', '|u1', 0x80),
 }
 
 # Maps the data column ID bytes to the corresponding dtype and bitmask.
