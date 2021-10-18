@@ -116,7 +116,7 @@ def to_df(
                 mpt_df = pd.DataFrame.from_dict(mpt_records)
                 df.append(mpt_df)
             elif 'mpr' in data.keys():
-                mpr_records = data['mpr'][1]['data']['datapoints']
+                mpr_records = data['mpr'][1]['data']['data_points']
                 mpr_df = pd.DataFrame.from_dict(mpr_records)
                 df.append(mpr_df)
     else:
