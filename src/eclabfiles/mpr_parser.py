@@ -58,13 +58,13 @@ settings_dtypes = {
 # Maps the flag column ID bytes to the corresponding dtype and bitmask.
 flag_column_dtypes = {
     0x0001: ('mode', '|u1', 0x03),
-    0x0002: ('ox/red', '|u1', 0x04),
-    0x0003: ('error', '|u1', 0x08),
-    0x0015: ('control changes', '|u1', 0x10),
-    0x001F: ('Ns changes', '|u1', 0x20),
+    0x0002: ('ox/red', '|b1', 0x04),
+    0x0003: ('error', '|b1', 0x08),
+    0x0015: ('control changes', '|b1', 0x10),
+    0x001F: ('Ns changes', '|b1', 0x20),
     # NOTE: I think the missing bitmask (0x40) is a stop bit. It
     # appears in the flag bytes of the very last data point.
-    0x0041: ('counter inc.', '|u1', 0x80),
+    0x0041: ('counter inc.', '|b1', 0x80),
 }
 
 # Maps the data column ID bytes to the corresponding dtype and bitmask.
@@ -394,10 +394,14 @@ def _parse_data(data: bytes, version: int) -> dict:
     n_columns = _read_value(data, 0x0004, '|u1')
     column_ids = _read_values(data, 0x0005, '<u2', n_columns)
     data_dtype, flags = _construct_data_dtype(column_ids)
-    # TODO: Depending on the version in the header, the data points
-    # start at a different point in the data part.
-    # V2: 0x0195, V3: 0x0196
-    data_points = _read_values(data, 0x0196, data_dtype, n_data_points)
+    # Depending on the version in the header, the data points start at a
+    # different point in the data part.
+    if version == 2:
+        data_points = _read_values(data, 0x0195, data_dtype, n_data_points)
+    elif version == 3:
+        data_points = _read_values(data, 0x0196, data_dtype, n_data_points)
+    else:
+        data_points = _read_values(data, 0x0196, data_dtype, n_data_points)
     if flags:
         # Extract flag values via bitmask (if flags are present).
         flag_values = np.array(
