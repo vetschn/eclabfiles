@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
+"""Functions for converting EC-Lab file data to DataFrame, CSV and XLSX.
+
+Author:         Nicolas Vetsch (veni@empa.ch / nicolas.vetsch@gmx.ch)
+Organisation:   EMPA Dübendorf, Materials for Energy Conversion (501)
+Date:           2021-10-18
 
 """
 import argparse
@@ -36,80 +40,37 @@ def _construct_path(other_path: str, ext: str) -> str:
     return this_path
 
 
-def mpr_to_df(mpr_path: str) -> pd.DataFrame:
-    """Extracts the data from an MPR file and returns it as a DataFrame.
+def parse(path: str) -> Union[list, dict]:
+    """Parses an EC-Lab file.
+
+    The function finds the file extension and tries to choose the
+    correct parser.
 
     Parameters
     ----------
-    mpr_path
-        The path to the MPR file to read in.
+    path
+        The path to an EC-Lab file (MPT/MPR/MPS)
 
     Returns
     -------
-    pd.DataFrame
-        The data parsed from the MPR file.
+    list or dict
+        The parsed file.
 
     """
-    mpr = parse_mpr(mpr_path)
-    mpr_records = mpr[1]['data']['data_points']
-    mpr_df = pd.DataFrame.from_dict(mpr_records)
-    return mpr_df
+    __, ext = os.path.splitext(path)
+    if ext == '.mpt':
+        parsed = parse_mpt(path)
+    elif ext == '.mpr':
+        parsed = parse_mpr(path)
+    elif ext == '.mps':
+        parsed = parse_mps(path)
+    return parsed
 
 
-def mpt_to_df(mpt_path: str) -> pd.DataFrame:
-    """Extracts the data from an MPT file and returns it as a DataFrame.
-
-    Parameters
-    ----------
-    mpt_path
-        The path to the MPT file to read in.
-
-    Returns
-    -------
-    pd.DataFrame
-        The data parsed from the MPT file.
-
-    """
-    mpt = parse_mpt(mpt_path)
-    mpt_records = mpt['data']
-    mpt_df = pd.DataFrame.from_dict(mpt_records)
-    return mpt_df
-
-
-def mps_to_df(mps_path: str) -> list[pd.DataFrame]:
-    """Extracts the data from the techniques of an MPS file.
-
-    Parameters
-    ----------
-    mps_path
-        The path to the MPS file to read in.
-
-    Returns
-    -------
-    list[pd.DataFrame]
-        The DataFrames from all the techniques specified in the MPS
-        file.
-
-    """
-    mps = parse_mps(mps_path, load_data=True)
-    dfs = []
-    for technique in mps['techniques']:
-        if 'data' not in technique.keys():
-            continue
-        data = technique['data']
-        # It's intentional to prefer MPT over MPR files.
-        if 'mpt' in data.keys():
-            mpt_records = data['mpt']['data']
-            mpt_df = pd.DataFrame.from_dict(mpt_records)
-            dfs.append(mpt_df)
-        elif 'mpr' in data.keys():
-            mpr_records = data['mpr'][1]['data']['datapoints']
-            mpr_df = pd.DataFrame.from_dict(mpr_records)
-            dfs.append(mpr_df)
-    return dfs
-
-
-def to_df(path: str) -> Union[pd.DataFrame, list[pd.DataFrame]]:
+def to_df(
+    path: str, 
+    get_technique: bool = False
+) -> Union[pd.DataFrame, list[pd.DataFrame]]:
     """Extracts the data from an EC-Lab file and returns it as Pandas
     DataFrame(s)
 
@@ -120,23 +81,47 @@ def to_df(path: str) -> Union[pd.DataFrame, list[pd.DataFrame]]:
     ----------
     path
         The path to an EC-Lab file (MPT/MPR/MPS)
+    get_technique (optional)
+        Whether to also get the technique name as parsed from the
+        original file. Useful for the other file-writing functions.
+        Defaults to False.
 
     Returns
     -------
     pd.DataFrame, list[pd.DataFrame]
         Data parsed from an MPT/MPR file or the data parsed from all
-        techniques in an MPS file.
+        techniques in an MPS file. Optionally also the parsed data is
+        returned.
 
     """
     __, ext = os.path.splitext(path)
     if ext == '.mpt':
-        return mpt_to_df(path)
+        mpt = parse_mpt(path)
+        mpt_records = mpt['data']
+        df = pd.DataFrame.from_dict(mpt_records)
     elif ext == '.mpr':
-        return mpr_to_df(path)
+        mpr = parse_mpr(path)
+        mpr_records = mpr[1]['data']['data_points']
+        df = pd.DataFrame.from_dict(mpr_records)
     elif ext == '.mps':
-        return mps_to_df(path)
+        mps = parse_mps(path, load_data=True)
+        df = []
+        for technique in mps['techniques']:
+            if 'data' not in technique.keys():
+                continue
+            data = technique['data']
+            # It's intentional to prefer MPT over MPR files.
+            if 'mpt' in data.keys():
+                mpt_records = data['mpt']['data']
+                mpt_df = pd.DataFrame.from_dict(mpt_records)
+                df.append(mpt_df)
+            elif 'mpr' in data.keys():
+                mpr_records = data['mpr'][1]['data']['datapoints']
+                mpr_df = pd.DataFrame.from_dict(mpr_records)
+                df.append(mpr_df)
     else:
         raise ValueError(f"Unrecognized file extension: {ext}")
+    return df
 
 
 def to_csv(path: str, csv_path: str = None) -> None:

@@ -110,7 +110,7 @@ def _parse_header(lines: list[str], n_header_lines: int) -> dict:
     header = {}
     if n_header_lines == 3:
         logging.info("No settings present in given MPT file.")
-        header['technique_name'] = lines[0].strip()
+        header['technique'] = lines[0].strip()
         return header
     # At this point the first two lines have already been read.
     header_lines = lines[:n_header_lines-3]

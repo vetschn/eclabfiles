@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""TODO
+"""Some definitions for all the data structures necessary to parse.
+
+The technique parameters in ASCII files (MPT/MPS), as well as the Numpy
+dtypes for the techniques in the MPR, can be found here.
+
+Author:         Nicolas Vetsch (veni@empa.ch / nicolas.vetsch@gmx.ch)
+Organisation:   EMPA Dübendorf, Materials for Energy Conversion (501)
+Date:           2021-10-18
 
 """
 import re

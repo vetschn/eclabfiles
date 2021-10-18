@@ -30,7 +30,7 @@ def _parse_techniques(technique_sections: list[str]) -> list:
         technique = {}
         technique_lines = section.split('\n')
         technique_name = technique_lines[1]
-        technique['technique']= technique_name
+        technique['technique'] = technique_name
         params = technique_lines[2:]
         params_keys = []
         if technique_name in technique_params.keys():
@@ -56,8 +56,7 @@ def _parse_techniques(technique_sections: list[str]) -> list:
         technique['params'] = params
         techniques.append(technique)
     return techniques
-    # TODO: Implement the automatic parsing of files within the same
-    # folder.
+
 
 def _load_technique_data(
     techniques: list[dict],
