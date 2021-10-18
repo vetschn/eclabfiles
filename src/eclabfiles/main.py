@@ -5,6 +5,7 @@
 """
 import argparse
 import os
+from typing import Union
 
 import pandas as pd
 
@@ -55,43 +56,6 @@ def mpr_to_df(mpr_path: str) -> pd.DataFrame:
     return mpr_df
 
 
-def mpr_to_csv(mpr_path: str, csv_path: str = None) -> None:
-    """Extracts the data from an MPR file and writes it to a CSV file.
-
-    Parameters
-    ----------
-    mpr_path
-        The path to the MPR file to read in.
-    csv_path (optional)
-        Path to the CSV file to write. Defaults to construct the
-        filename from the mpt_path.
-
-    """
-    mpr_df = mpr_to_df(mpr_path)
-    if csv_path:
-        mpr_df.to_csv(csv_path, float_format='%.15f')
-    mpr_df.to_csv(_construct_path(mpr_path, '.csv'), float_format='%.15f',
-                  index=False)
-
-
-def mpr_to_xlsx(mpr_path: str, excel_path: str = None) -> None:
-    """Extracts the data from an MPR file and writes it to an Excel file.
-
-    Parameters
-    ----------
-    mpr_path
-        The path to the MPR file to read in.
-    excel_path (optional)
-        Path to the Excel file to write. Defaults to construct the
-        filename from the mpt_path.
-
-    """
-    mpr_df = mpr_to_df(mpr_path)
-    if excel_path:
-        mpr_df.to_excel(excel_path, index=False)
-    mpr_df.to_excel(_construct_path(mpr_path, '.xlsx'), index=False)
-
-
 def mpt_to_df(mpt_path: str) -> pd.DataFrame:
     """Extracts the data from an MPT file and returns it as a DataFrame.
 
@@ -112,44 +76,7 @@ def mpt_to_df(mpt_path: str) -> pd.DataFrame:
     return mpt_df
 
 
-def mpt_to_csv(mpt_path: str, csv_path: str = None) -> None:
-    """Extracts the data from an MPT file and writes it to a CSV file.
-
-    Parameters
-    ----------
-    mpt_path
-        The path to the MPT file to read in.
-    csv_path (optional)
-        Path to the CSV file to write. Defaults to construct the
-        filename from the mpt_path.
-
-    """
-    mpt_df = mpr_to_df(mpt_path)
-    if csv_path:
-        mpt_df.to_csv(csv_path, float_format='%.15f', index=False)
-    mpt_df.to_csv(_construct_path(mpt_path, '.csv'), float_format='%.15f',
-                  index=False)
-
-
-def mpt_to_xlsx(mpt_path: str, excel_path: str = None) -> None:
-    """Extracts the data from an MPT file and writes it to an Excel file.
-
-    Parameters
-    ----------
-    mpt_path
-        The path to the MPT file to read in.
-    excel_path (optional)
-        Path to the Excel file to write. Defaults to construct the
-        filename from the mpt_path.
-
-    """
-    mpt_df = mpr_to_df(mpt_path)
-    if excel_path:
-        mpt_df.to_excel(excel_path, index=False)
-    mpt_df.to_excel(_construct_path(mpt_path, '.xlsx'), index=False)
-
-
-def mps_to_dfs(mps_path: str) -> list[pd.DataFrame]:
+def mps_to_df(mps_path: str) -> list[pd.DataFrame]:
     """Extracts the data from the techniques of an MPS file.
 
     Parameters
@@ -182,50 +109,89 @@ def mps_to_dfs(mps_path: str) -> list[pd.DataFrame]:
     return dfs
 
 
-def mps_to_csv(mps_path: str, csv_path: str = None) -> None:
-    """Extracts the data from the techniques of an MPS file and writes
-    it to a number of CSV files.
+def to_df(path: str) -> Union[pd.DataFrame, list[pd.DataFrame]]:
+    """Extracts the data from an EC-Lab file and returns it as Pandas
+    DataFrame(s)
+
+    The function finds the file extension and tries to choose the
+    correct parser. If the file is an MPS, returns a list of DataFrames.
 
     Parameters
     ----------
-    mps_path
-        The path to the MPS file to read in.
+    path
+        The path to an EC-Lab file (MPT/MPR/MPS)
+
+    Returns
+    -------
+    pd.DataFrame, list[pd.DataFrame]
+        Data parsed from an MPT/MPR file or the data parsed from all
+        techniques in an MPS file.
+
+    """
+    __, ext = os.path.splitext(path)
+    if ext == '.mpt':
+        return mpt_to_df(path)
+    elif ext == '.mpr':
+        return mpr_to_df(path)
+    elif ext == '.mps':
+        return mps_to_df(path)
+    else:
+        raise ValueError(f"Unrecognized file extension: {ext}")
+
+
+def to_csv(path: str, csv_path: str = None) -> None:
+    """Extracts the data from an MPT/MPR file or from the techniques in
+    an MPS file and writes it to a number of CSV files
+
+    Parameters
+    ----------
+    path
+        The path to the EC-Lab file to read in.
     csv_path
         Base path to use for the CSV files. The function automatically
         appends the technique number to the file name. Defaults to
         construct the CSV filename from the mpt_path.
 
     """
-    dfs = mps_to_dfs(mps_path)
-    for i, df in enumerate(dfs):
-        if csv_path:
+    df = to_df(path)
+    if isinstance(df, pd.DataFrame):
+        if csv_path is None:
+            csv_path = _construct_path(path, '.csv')
+        df.to_csv(csv_path, float_format='%.15f', index=False)
+    elif isinstance(df, list):
+        for i, df in enumerate(df):
+            if csv_path:
+                df.to_csv(
+                    _construct_path(csv_path, f'_{i+1:02d}.csv'),
+                    float_format='%.15f', index=False)
             df.to_csv(
-                _construct_path(csv_path, f'_{i+1:02d}.csv'),
+                _construct_path(path, f'_{i+1:02d}.csv'),
                 float_format='%.15f', index=False)
-        df.to_csv(
-            _construct_path(mps_path, f'_{i+1:02d}.csv'),
-            float_format='%.15f', index=False)
 
 
-def mps_to_xlsx(mps_path: str, excel_path: str = None):
-    """Extracts the data from the techniques of an MPS file and writes
-    it to multiple sheets of an Excel file.
+def to_xlsx(path: str, xlsx_path: str = None) -> None:
+    """Extracts the data from an MPT/MPR file or from the techniques in
+    an MPS file and writes it to an Excel file.
 
     Parameters
     ----------
-    mps_path
-        The path to the MPS file to read in.
-    excel_path
+    path
+        The path to the EC-Lab file to read in.
+    excel_path (optional)
         Path to the Excel file to write. Defaults to construct the
         filename from the mpt_path.
 
     """
-    dfs = mps_to_dfs(mps_path)
-    if not excel_path:
-        excel_path = _construct_path(mps_path, '.xlsx')
-    with pd.ExcelWriter(excel_path) as writer:
-        for i, df in enumerate(dfs):
-            df.to_excel(writer, sheet_name=f'{i+1:02d}' , index=False)
+    df = to_df(path)
+    if xlsx_path is None:
+        xlsx_path = _construct_path(path, '.xlsx')
+    if isinstance(df, pd.DataFrame):
+        df.to_excel(xlsx_path, index=False)
+    elif isinstance(df, list):
+        with pd.ExcelWriter(xlsx_path) as writer:
+            for i, df in enumerate(df):
+                df.to_excel(
+                    writer, sheet_name=f'{i+1:02d}' , index=False)
 
 
 def _parse_arguments() -> argparse.Namespace:
@@ -245,27 +211,11 @@ def _parse_arguments() -> argparse.Namespace:
 
 def _run():
     args = _parse_arguments()
-    __, file_ext = os.path.splitext(args.file)
-    if file_ext == '.mpr':
-        if args.format == 'csv':
-            mpr_to_csv(args.file)
-        elif args.format == 'xlsx':
-            mpr_to_xlsx(args.file)
-    elif file_ext == '.mpt':
-        if args.format == 'csv':
-            mpt_to_csv(args.file)
-        elif args.format == 'xlsx':
-            mpt_to_xlsx(args.file)
-    elif file_ext == '.mps':
-        if args.format == 'csv':
-            mps_to_csv(args.file)
-        elif args.format == 'xlsx':
-            mps_to_xlsx(args.file)
+    if args.format == 'csv':
+        to_csv(args.file)
+    elif args.format == 'xlsx':
+        to_xlsx(args.file)
 
 
 if __name__ == '__main__':
     _run()
-
-
-# TODO: to_df, to_csv, to_xlsx
-# TODO:
