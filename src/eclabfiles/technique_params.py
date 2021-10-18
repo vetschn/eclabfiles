@@ -271,7 +271,7 @@ geis_params = {
         'Ia/Va',
         'Ia',
         'Ia_unit',
-        'va_pourcent', # Random French parameter name?
+        'va_pourcent',  # Random French parameter name?
         'pw',
         'Na',
         'corr',
@@ -340,6 +340,7 @@ technique_params = {
     'Loop': loop_params,
 }
 
+
 def construct_mb_params(settings: list[str]) -> list[str]:
     """Constructs the parameter names for the MB technique."""
     lim_nb_match = re.match(r'lim_nb\s+(?P<val>.+)', ''.join(settings))
@@ -370,6 +371,7 @@ def construct_mb_params(settings: list[str]) -> list[str]:
         params += rec
     return params + mb_params['tail']
 
+
 def construct_geis_params(settings: list[str]) -> list[str]:
     """Constructs the parameter names for the GEIS technique."""
     lim_nb_match = re.match(r'lim_nb\s+(?P<val>.+)', ''.join(settings))
@@ -386,6 +388,7 @@ def construct_geis_params(settings: list[str]) -> list[str]:
         ]
         params += limit
     return params + geis_params['tail']
+
 
 def construct_peis_params(settings: list[str]) -> list[str]:
     """Constructs the parameter names for the PEIS technique."""
@@ -534,7 +537,7 @@ wait_params_dtype = np.dtype([
     ('td', '<u4'),
     ('from', '|u1'),
     ('tech_num', '|u1'),
-    ('ole_date', '<f4'), # Why the hell would they split this?!
+    ('ole_date', '<f4'),  # Why the hell would they split this?!
     ('ole_time', '<f4'),
     ('record', '|u1'),
     ('dE', '<f4'),

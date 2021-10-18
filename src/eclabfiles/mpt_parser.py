@@ -62,6 +62,7 @@ def _parse_technique_params(technique: str, settings: list[str]) -> dict:
     params = [dict(zip(params_keys, values)) for values in params_values]
     return params, len(params_keys)
 
+
 def _parse_loop_indexes(loops_lines: list[str]) -> dict:
     """Parses the loops section of an MPT file header.
 
@@ -88,6 +89,7 @@ def _parse_loop_indexes(loops_lines: list[str]) -> dict:
             loops_lines[loop+1])['val']
         loop_indexes.append(int(index))
     return {'n': n_loops, 'indexes': loop_indexes}
+
 
 def _parse_header(lines: list[str], n_header_lines: int) -> dict:
     """Parses the header part of an MPT file including loops.
@@ -128,6 +130,7 @@ def _parse_header(lines: list[str], n_header_lines: int) -> dict:
         header['loops'] = _parse_loop_indexes(loops_lines)
     return header
 
+
 def _parse_data(lines: list[str], n_header_lines: int) -> list[dict]:
     """Parses the data part of an MPT file.
 
@@ -153,6 +156,7 @@ def _parse_data(lines: list[str], n_header_lines: int) -> list[dict]:
     # Remove the extra column due to an extra tab in MPT files.
     data = data.iloc[:, :-1]
     return data.to_dict(orient='records')
+
 
 def parse_mpt(path: str) -> dict:
     """Parses an EC-Lab MPT file.

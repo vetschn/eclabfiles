@@ -20,8 +20,10 @@ def _parse_header(headers: list[str]) -> dict:
     """Parses the header of an MPS file."""
     header = {}
     header['filename'] = headers[0].strip().split()[-1]
-    header['general_settings'] = [line.strip() for line in headers[1].split('\n')]
+    header['general_settings'] = [line.strip()
+                                  for line in headers[1].split('\n')]
     return header
+
 
 def _parse_techniques(technique_sections: list[str]) -> list:
     """Parses the techniques section of an MPS file."""
@@ -116,6 +118,7 @@ def _load_technique_data(
             technique['data']['mpt'] = parse_mpt(mpt_paths[i])
             i += 1
     return techniques
+
 
 def parse_mps(path: str, load_data: bool = False) -> dict:
     """Parses an EC-Lab MPS file.

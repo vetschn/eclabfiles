@@ -67,10 +67,7 @@ def parse(path: str) -> Union[list, dict]:
     return parsed
 
 
-def to_df(
-    path: str,
-    get_technique: bool = False
-) -> Union[pd.DataFrame, list[pd.DataFrame]]:
+def to_df(path: str) -> Union[pd.DataFrame, list[pd.DataFrame]]:
     """Extracts the data from an EC-Lab file and returns it as Pandas
     DataFrame(s)
 
@@ -176,7 +173,7 @@ def to_xlsx(path: str, xlsx_path: str = None) -> None:
         with pd.ExcelWriter(xlsx_path) as writer:
             for i, df in enumerate(df):
                 df.to_excel(
-                    writer, sheet_name=f'{i+1:02d}' , index=False)
+                    writer, sheet_name=f'{i+1:02d}', index=False)
 
 
 def _parse_arguments() -> argparse.Namespace:

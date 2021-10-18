@@ -193,6 +193,7 @@ log_dtypes = {
     0x0922: ('averaging_points', '|u1'),
 }
 
+
 def _ole_to_datetime(ole_timestamp: float) -> datetime:
     """Converts a Microsoft OLE timestamp into a datetime object.
 
@@ -218,6 +219,7 @@ def _ole_to_datetime(ole_timestamp: float) -> datetime:
     timestamp = ole_zero + ole_delta
     return timestamp
 
+
 def _read_pascal_string(bytes: bytes) -> bytes:
     """Parses a variable-length length-prefixed string.
 
@@ -234,6 +236,7 @@ def _read_pascal_string(bytes: bytes) -> bytes:
     """
     assert len(bytes) >= bytes[0] + 1, "Insufficient number of bytes."
     return bytes[1:bytes[0]+1]
+
 
 def _read_value(data: bytes, offset: int, dtype) -> Any:
     """Reads a single value from a buffer at a certain offset.
@@ -260,6 +263,7 @@ def _read_value(data: bytes, offset: int, dtype) -> Any:
         return _read_pascal_string(data[offset:])
     return np.frombuffer(data, offset=offset, dtype=dtype, count=1)[0]
 
+
 def _read_values(data: bytes, offset: int, dtype, count) -> Any:
     """Reads in multiple values from a buffer starting at offset.
 
@@ -283,6 +287,7 @@ def _read_values(data: bytes, offset: int, dtype, count) -> Any:
 
     """
     return np.frombuffer(data, offset=offset, dtype=dtype, count=count)
+
 
 def _parse_settings(data: bytes) -> dict:
     """Parses through the contents of settings modules.
@@ -329,6 +334,7 @@ def _parse_settings(data: bytes) -> dict:
     settings['params'] = params
     return settings
 
+
 def _construct_data_dtype(column_ids: list[int]) -> tuple[np.dtype, dict]:
     """Puts together a dtype from a list of data column IDs.
 
@@ -370,6 +376,7 @@ def _construct_data_dtype(column_ids: list[int]) -> tuple[np.dtype, dict]:
                 f"Column ID {id} after column {column_dtypes[-1][0]} "
                 f"is unknown.")
     return np.dtype(column_dtypes), flags
+
 
 def _parse_data(data: bytes, version: int) -> dict:
     """Parses through the contents of data modules.
@@ -425,6 +432,7 @@ def _parse_data(data: bytes, version: int) -> dict:
     }
     return data
 
+
 def _parse_log(data: bytes) -> dict:
     """Parses through the contents of log modules.
 
@@ -444,6 +452,7 @@ def _parse_log(data: bytes) -> dict:
         offset, (name, dtype) = item
         log[name] = _read_value(data, offset, dtype)
     return log
+
 
 def _parse_loop(data: bytes) -> dict:
     """Parses through the contents of loop modules.
@@ -467,6 +476,7 @@ def _parse_loop(data: bytes) -> dict:
     }
     return loop
 
+
 def _read_modules(file: TextIOWrapper) -> list:
     """Reads in modules from the given file object.
 
@@ -488,10 +498,12 @@ def _read_modules(file: TextIOWrapper) -> list:
             header_bytes,
             module_header_dtype,
             count=1)
-        header = {key: header_array[key][0] for key in module_header_dtype.names}
+        header = {key: header_array[key][0]
+                  for key in module_header_dtype.names}
         bytes = file.read(header['length'])
         modules.append({'header': header, 'data': bytes})
     return modules
+
 
 def parse_mpr(path: str) -> list[dict]:
     """Parses an EC-Lab MPR file.
