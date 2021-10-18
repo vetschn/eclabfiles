@@ -68,7 +68,7 @@ def parse(path: str) -> Union[list, dict]:
 
 
 def to_df(
-    path: str, 
+    path: str,
     get_technique: bool = False
 ) -> Union[pd.DataFrame, list[pd.DataFrame]]:
     """Extracts the data from an EC-Lab file and returns it as Pandas

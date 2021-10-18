@@ -5,6 +5,20 @@
 The technique parameters in ASCII files (MPT/MPS), as well as the Numpy
 dtypes for the techniques in the MPR, can be found here.
 
+Implemented techniques:
+    - CA
+    - CP
+    - CV
+    - GCPL
+    - GEIS
+    - LOOP
+    - LSV
+    - MB (TODO for .mpr)
+    - OCV
+    - PEIS
+    - WAIT
+    - ZIR (TODO for .mpr)
+
 Author:         Nicolas Vetsch (veni@empa.ch / nicolas.vetsch@gmx.ch)
 Organisation:   EMPA Dübendorf, Materials for Energy Conversion (501)
 Date:           2021-10-18
