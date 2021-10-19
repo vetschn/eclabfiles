@@ -424,8 +424,8 @@ def _parse_data(data: bytes, version: int) -> dict:
         data_points = rfn.merge_arrays(
             [flag_values, data_points],
             flatten=True)
-        data_points = pd.DataFrame.from_records(data_points)
-        data_points = data_points.to_dict(orient='records')
+    data_points = pd.DataFrame.from_records(data_points)
+    data_points = data_points.to_dict(orient='records')
     data = {
         'n_data_points': n_data_points,
         'n_columns': n_columns,
@@ -470,7 +470,7 @@ def _parse_loop(data: bytes) -> dict:
 
     """
     n_indexes = _read_value(data, 0x0000, '<u4')
-    indexes = _read_values(data, 0x0004, '<u4', n_indexes)
+    indexes = list(_read_values(data, 0x0004, '<u4', n_indexes))
     loop = {
         'n_indexes': n_indexes,
         'indexes': indexes,
