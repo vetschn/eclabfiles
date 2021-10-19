@@ -176,8 +176,11 @@ def parse_mpt(path: str) -> dict:
     with open(path, 'r', encoding='windows-1252') as mpt:
         if mpt.readline() != file_magic:
             raise ValueError("Invalid file magic for given MPT file.")
+        logging.info("Reading `.mpt` file...")
         n_header_lines = int(mpt.readline().strip().split()[-1])
         lines = mpt.readlines()
+        logging.info("Parsing `.mpt` header...")
         header = _parse_header(lines, n_header_lines)
+        logging.info("Parsing `.mpt` data...")
         data = _parse_data(lines, n_header_lines)
     return {'header': header, 'data': data}

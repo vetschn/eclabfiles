@@ -8,6 +8,7 @@ Date:           2021-10-13
 
 """
 import glob
+import logging
 import os
 
 from .mpr_parser import parse_mpr
@@ -145,9 +146,12 @@ def parse_mps(path: str, load_data: bool = False) -> dict:
     with open(path, 'r', encoding='windows-1252') as mps:
         if mps.readline() != file_magic:
             raise ValueError("Invalid file magic for given MPS file.")
+        logging.info("Reading `.mps` file...")
         sections = mps.read().split('\n\n')
         n_linked_techniques = int(sections[0].strip().split()[-1])
+        logging.info("Parsing `.mps` header...")
         header = _parse_header(sections[1:3])
+        logging.info("Parsing `.mps` techniques...")
         techniques = _parse_techniques(sections[3:])
     if len(techniques) != n_linked_techniques:
         raise ValueError(
@@ -157,5 +161,6 @@ def parse_mps(path: str, load_data: bool = False) -> dict:
     mpr_paths = glob.glob(base_path + '*.mpr')
     mpt_paths = glob.glob(base_path + '*.mpt')
     if (load_data and (mpr_paths or mpt_paths)):
+        logging.info("Loading technique data from `.mpt`/`.mpr`...")
         techniques = _load_technique_data(techniques, mpr_paths, mpt_paths)
     return {'header': header, 'techniques': techniques}

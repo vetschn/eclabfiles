@@ -16,12 +16,13 @@ Organisation:   EMPA Dübendorf, Materials for Energy Conversion (501)
 Date:           2021-09-29
 
 """
+import logging
 from datetime import datetime, timedelta
 from io import TextIOWrapper
 from typing import Any
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from numpy.lib import recfunctions as rfn
 
 from .technique_params import technique_params_dtypes
@@ -495,9 +496,7 @@ def _read_modules(file: TextIOWrapper) -> list:
     while file.read(len(b'MODULE')) == b'MODULE':
         header_bytes = file.read(module_header_dtype.itemsize)
         header_array = np.frombuffer(
-            header_bytes,
-            module_header_dtype,
-            count=1)
+            header_bytes, module_header_dtype, count=1)
         header = {key: header_array[key][0]
                   for key in module_header_dtype.names}
         bytes = file.read(header['length'])
@@ -523,8 +522,10 @@ def parse_mpr(path: str) -> list[dict]:
                   b'\x00\x00\x00\x00')
     with open(path, 'rb') as mpr:
         if mpr.read(len(file_magic)) != file_magic:
-            raise ValueError("Invalid file magic for given MPR file.")
+            raise ValueError("Invalid file magic for given `.mpr` file.")
+        logging.info("Reading `.mpr` modules...")
         modules = _read_modules(mpr)
+        logging.info("Parsing `.mpr` module data...")
         for module in modules:
             name = module['header']['short_name']
             if name == b'VMP Set   ':
