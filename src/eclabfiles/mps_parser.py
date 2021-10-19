@@ -53,7 +53,7 @@ def _parse_techniques(technique_sections: list[str]) -> list:
         n_sequences = int(len(params[0])/20)
         params_values = []
         for seq in range(1, n_sequences):
-            params_values.append([param[seq*20:].strip() for param in params])
+            params_values.append([param[seq*20:(seq+1)*20].strip() for param in params])
         # TODO: Translate the parameters from str to the appropriate type.
         params = [dict(zip(params_keys, values)) for values in params_values]
         technique['params'] = params
@@ -86,17 +86,13 @@ def _load_technique_data(
         The list of technique dictionaries now including any data.
 
     """
-    # Determine the number of files that are expected. Loops and wait do
-    # not write data.
+    # Determine the number of files that are expected and initialize the
+    # data sections. Loops and wait do not write data.
     n_expected_files = 0
     for technique in techniques:
         if technique['technique'] in {'Wait', 'Loop'}:
             continue
         n_expected_files += 1
-    # Initialize the data sections.
-    for technique in techniques:
-        if technique['technique'] in {'Wait', 'Loop'}:
-            continue
         technique['data'] = {}
     # Parse any MPR files.
     if n_expected_files == len(mpr_paths):
@@ -121,7 +117,7 @@ def _load_technique_data(
     return techniques
 
 
-def parse_mps(path: str, load_data: bool = False) -> dict:
+def parse_mps(path: str, load_data: bool = True) -> dict:
     """Parses an EC-Lab MPS file.
 
     If there are MPR or MPT files present in the same folder, those
