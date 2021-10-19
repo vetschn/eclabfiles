@@ -57,7 +57,7 @@ def _parse_technique_params(technique: str, settings: list[str]) -> dict:
     n_sequences = int(len(params[0])/20)
     params_values = []
     for seq in range(1, n_sequences):
-        params_values.append([param[seq*20:].strip() for param in params])
+        params_values.append([param[seq*20:(seq+1)*20].strip() for param in params])
     # TODO: Translate the parameters from str to the appropriate type.
     params = [dict(zip(params_keys, values)) for values in params_values]
     return params, len(params_keys)
