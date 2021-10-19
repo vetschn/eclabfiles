@@ -1,5 +1,5 @@
-
+*__pycache__
 dist/
 build/
-src/eclabfiles.egg-info/
-src/eclabfiles/__pycache__/
+*.egg-info
+*.egg
