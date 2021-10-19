@@ -304,6 +304,11 @@ mb_params = {
         'ctrl3_val_vs',
         'N',
         'charge/discharge',
+        'charge/discharge_1',
+        'apply_I/C_1',
+        'N1',
+        'ctrl4_val_unit',
+        'ctrl4_val_vs',
         'ctrl_seq',
         'ctrl_repeat',
         'ctrl_trigger',
@@ -343,72 +348,78 @@ technique_params = {
 
 def construct_mb_params(settings: list[str]) -> list[str]:
     """Constructs the parameter names for the MB technique."""
-    lim_nb_match = re.match(r'lim_nb\s+(?P<val>.+)', ''.join(settings))
-    rec_nb_match = re.match(r'rec_nb\s+(?P<val>.+)', ''.join(settings))
-    if not lim_nb_match and not rec_nb_match:
-        return mb_params['head'] + (mb_params['tail'])
-    lim_nb = int(lim_nb_match['val'])
-    params = mb_params['head'].append('lim_nb')
-    for i, __ in enumerate(range(lim_nb)):
-        lim = [
-            f'lim{i}_type',
-            f'lim{i}_comp',
-            f'lim{i}_Q',
-            f'lim{i}_value',
-            f'lim{i}_value_unit',
-            f'lim{i}_action',
-            f'lim{i}_seq',
-        ]
-        params += lim
-    rec_nb = int(rec_nb_match['val'])
-    params = mb_params['head'].append('rec_nb')
-    for i, __ in enumerate(range(rec_nb)):
-        rec = [
-            f'rec{i}_type',
-            f'rec{i}_value',
-            f'rec{i}_value_unit',
-        ]
-        params += rec
+    params = mb_params['head']
+    ns_match = re.search(r'Ns.+', '\n'.join(settings))
+    if ns_match:
+        params = ['Ns'] + mb_params['head']
+    lim_nb_match = re.search(r'lim_nb\s+(?P<val>.+)', '\n'.join(settings))
+    if lim_nb_match:
+        lim_nb = int(max(lim_nb_match['val'].split()))
+        params.append('lim_nb')
+        for i, __ in enumerate(range(lim_nb), 1):
+            lim = [
+                f'lim{i}_type',
+                f'lim{i}_comp',
+                f'lim{i}_Q',
+                f'lim{i}_value',
+                f'lim{i}_value_unit',
+                f'lim{i}_action',
+                f'lim{i}_seq',
+            ]
+            params += lim
+    rec_nb_match = re.search(r'rec_nb\s+(?P<val>.+)', '\n'.join(settings))
+    if rec_nb_match:
+        rec_nb = int(max(rec_nb_match['val'].split()))
+        params.append('rec_nb')
+        for i, __ in enumerate(range(rec_nb), 1):
+            rec = [
+                f'rec{i}_type',
+                f'rec{i}_value',
+                f'rec{i}_value_unit',
+            ]
+            params += rec
     return params + mb_params['tail']
 
 
 def construct_geis_params(settings: list[str]) -> list[str]:
     """Constructs the parameter names for the GEIS technique."""
-    lim_nb_match = re.match(r'lim_nb\s+(?P<val>.+)', ''.join(settings))
-    if not lim_nb_match:
-        return geis_params['head'] + geis_params['tail']
-    lim_nb = int(lim_nb_match['val'])
-    params = geis_params['head'].append('lim_nb')
-    for i, __ in enumerate(range(lim_nb)):
-        limit = [
-            f'limit_type{i}',
-            f'limit_comp{i}',
-            f'limit_value{i}',
-            f'limit_unit{i}',
-        ]
-        params += limit
+    params = geis_params['head']
+    ns_match = re.search(r'Ns.+', '\n'.join(settings))
+    if ns_match:
+        params = ['Ns'] + geis_params['head']
+    lim_nb_match = re.search(r'lim_nb\s+(?P<val>.+)', '\n'.join(settings))
+    if lim_nb_match:
+        lim_nb = int(max(lim_nb_match['val'].split()))
+        params.append('lim_nb')
+        for i, __ in enumerate(range(lim_nb), 1):
+            limit = [
+                f'limit_type{i}',
+                f'limit_comp{i}',
+                f'limit_value{i}',
+                f'limit_unit{i}',
+            ]
+            params += limit
     return params + geis_params['tail']
 
 
 def construct_peis_params(settings: list[str]) -> list[str]:
     """Constructs the parameter names for the PEIS technique."""
     params = peis_params['head']
-    ns_match = re.match(r'Ns\s+(?P<val>.+)', ''.join(settings))
+    ns_match = re.search(r'Ns\s.+', '\n'.join(settings))
     if ns_match:
         params = ['Ns'] + peis_params['head']
-    lim_nb_match = re.match(r'lim_nb\s+(?P<val>.+)', ''.join(settings))
-    if not lim_nb_match:
-        return params + peis_params['tail']
-    lim_nb = int(lim_nb_match['val'])
-    params = params.append('lim_nb')
-    for i, __ in enumerate(range(lim_nb)):
-        limit = [
-            f'limit_type{i}',
-            f'limit_comp{i}',
-            f'limit_value{i}',
-            f'limit_unit{i}',
-        ]
-        params += limit
+    lim_nb_match = re.search(r'lim_nb\s+(?P<val>.+)', '\n'.join(settings))
+    if lim_nb_match:
+        lim_nb = int(max(lim_nb_match['val'].split()))
+        params.append('lim_nb')
+        for i, __ in enumerate(range(lim_nb), 1):
+            limit = [
+                f'limit_type{i}',
+                f'limit_comp{i}',
+                f'limit_value{i}',
+                f'limit_unit{i}',
+            ]
+            params += limit
     return params + peis_params['tail']
 
 
