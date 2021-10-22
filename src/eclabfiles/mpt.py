@@ -52,15 +52,19 @@ def _parse_technique_params(technique: str, settings: list[str]) -> dict:
         params_keys = construct_mb_params(settings)
     else:
         raise NotImplementedError(f"Technique '{technique}' not implemented.")
+    logging.debug(f"Constructed a parameter set of length {len(params_keys)}.")
     params = settings[-len(params_keys):]
+    logging.debug(f"params in settings: {params}")
     # The sequence param columns are always allocated 20 characters.
     n_sequences = int(len(params[0])/20)
+    logging.debug(f"Found {n_sequences} sequences")
     params_values = []
     for seq in range(1, n_sequences):
         params_values.append([param[seq*20:(seq+1)*20].strip()
                              for param in params])
     # TODO: Translate the parameters from str to the appropriate type.
     params = [dict(zip(params_keys, values)) for values in params_values]
+    logging.debug(f"Found params: {params}")
     return params, len(params_keys)
 
 
@@ -113,7 +117,6 @@ def _parse_header(lines: list[str], n_header_lines: int) -> dict:
     header = {}
     if n_header_lines == 3:
         logging.info("No settings present in given MPT file.")
-        header['technique'] = lines[0].strip()
         return header
     # At this point the first two lines have already been read.
     header_lines = lines[:n_header_lines-3]
@@ -122,8 +125,7 @@ def _parse_header(lines: list[str], n_header_lines: int) -> dict:
     settings_lines = header_sections[1].split('\n')
     header['technique'] = technique_name
     header['params'], n_params = _parse_technique_params(
-        technique_name,
-        settings_lines)
+        technique_name, settings_lines)
     header['settings'] = [line.strip() for line in settings_lines[:n_params]]
     if len(header_sections) == 3:
         # The header contains a loops section.
