@@ -134,7 +134,7 @@ def _parse_header(lines: list[str], n_header_lines: int) -> dict:
     return header
 
 
-def _parse_data(lines: list[str], n_header_lines: int) -> list[dict]:
+def _parse_datapoints(lines: list[str], n_header_lines: int) -> list[dict]:
     """Parses the data part of an MPT file.
 
     Parameters
@@ -185,5 +185,5 @@ def parse_mpt(path: str) -> dict:
         logging.info("Parsing `.mpt` header...")
         header = _parse_header(lines, n_header_lines)
         logging.info("Parsing `.mpt` data...")
-        data = _parse_data(lines, n_header_lines)
-    return {'header': header, 'data': data}
+        datapoints = _parse_datapoints(lines, n_header_lines)
+    return {'header': header, 'datapoints': datapoints}
