@@ -13,9 +13,9 @@ from typing import Union
 
 import pandas as pd
 
-from .mpr_parser import parse_mpr
-from .mps_parser import parse_mps
-from .mpt_parser import parse_mpt
+from .mpr import parse_mpr
+from .mps import parse_mps
+from .mpt import parse_mpt
 
 
 def _construct_path(other_path: str, ext: str) -> str:

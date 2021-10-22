@@ -92,7 +92,7 @@ The techniques implemented are:
 - `GEIS`
 - `LOOP`
 - `LSV`
-- `MB` (TODO for .mpr)
+- `MB`
 - `OCV`
 - `PEIS`
 - `WAIT`

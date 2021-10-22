@@ -17,7 +17,6 @@ Date:           2021-09-29
 
 """
 import logging
-from datetime import datetime, timedelta
 from io import TextIOWrapper
 from typing import Any
 
@@ -25,7 +24,7 @@ import numpy as np
 import pandas as pd
 from numpy.lib import recfunctions as rfn
 
-from .technique_params import technique_params_dtypes
+from .techniques import technique_params_dtypes
 
 # Module header at the top of every MODULE block.
 module_header_dtype = np.dtype([
