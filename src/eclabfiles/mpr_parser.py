@@ -196,32 +196,6 @@ log_dtypes = {
 }
 
 
-def _ole_to_datetime(ole_timestamp: float) -> datetime:
-    """Converts a Microsoft OLE timestamp into a datetime object.
-
-    The OLE automation date format is a floating point value, counting
-    days since midnight 30 December 1899. Hours and minutes are
-    represented as fractional days.
-
-    https://devblogs.microsoft.com/oldnewthing/20030905-02/?p=42653
-
-    Parameters
-    ----------
-    ole_timestamp
-        A timestamp in Microsoft OLE format.
-
-    Returns
-    -------
-    datetime
-        The corresponding datetime.
-
-    """
-    ole_zero = datetime(year=1899, month=12, day=30)
-    ole_delta = timedelta(days=ole_timestamp)
-    timestamp = ole_zero + ole_delta
-    return timestamp
-
-
 def _read_pascal_string(bytes: bytes) -> bytes:
     """Parses a variable-length length-prefixed string.
 
