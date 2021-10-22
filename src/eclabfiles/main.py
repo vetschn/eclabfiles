@@ -98,7 +98,7 @@ def to_df(path: str) -> Union[pd.DataFrame, list[pd.DataFrame]]:
         df = pd.DataFrame.from_dict(mpt_records)
     elif ext == '.mpr':
         mpr = parse_mpr(path)
-        mpr_records = mpr[1]['data']['data_points']
+        mpr_records = mpr[1]['data']['datapoints']
         df = pd.DataFrame.from_dict(mpr_records)
     elif ext == '.mps':
         mps = parse_mps(path, load_data=True)
@@ -113,7 +113,7 @@ def to_df(path: str) -> Union[pd.DataFrame, list[pd.DataFrame]]:
                 mpt_df = pd.DataFrame.from_dict(mpt_records)
                 df.append(mpt_df)
             elif 'mpr' in data.keys():
-                mpr_records = data['mpr'][1]['data']['data_points']
+                mpr_records = data['mpr'][1]['data']['datapoints']
                 mpr_df = pd.DataFrame.from_dict(mpr_records)
                 df.append(mpr_df)
     else:
