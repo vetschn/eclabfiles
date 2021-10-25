@@ -14,7 +14,8 @@ import os
 from .mpr import parse_mpr
 from .mpt import parse_mpt
 from .techniques import (construct_geis_params, construct_mb_params,
-                         construct_peis_params, technique_params)
+                         construct_ocv_params, construct_peis_params,
+                         technique_params)
 
 
 def _parse_header(headers: list[str]) -> dict:
@@ -40,6 +41,8 @@ def _parse_techniques(technique_sections: list[str]) -> list:
             # The easy case.
             params_keys = technique_params[technique_name]
         # The more complicated case.
+        elif technique_name == 'Open Circuit Voltage':
+            params_keys = construct_ocv_params(params)
         elif technique_name == 'Potentio Electrochemical Impedance Spectroscopy':
             params_keys = construct_peis_params(params)
         elif technique_name == 'Galvano Electrochemical Impedance Spectroscopy':

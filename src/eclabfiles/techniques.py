@@ -94,15 +94,18 @@ cv_params = [
     'Ef_vs',
 ]
 
-ocv_params = [
-    'tR',
-    'dER/dt',
-    'record',
-    'dER',
-    'dtR',
-    'E_range_min',
-    'E_range_max',
-]
+ocv_params = {
+    'head': [
+        'tR',
+        'dER/dt',
+    ],
+    'tail': [
+        'dER',
+        'dtR',
+        'E_range_min',
+        'E_range_max',
+    ],
+}
 
 ca_params = [
     'Ns',
@@ -272,7 +275,7 @@ geis_params = {
         'Ia/Va',
         'Ia',
         'Ia_unit',
-        'va_pourcent',  # Random French parameter name?
+        'va_pourcent', # Random French parameter name?
         'pw',
         'Na',
         'corr',
@@ -334,7 +337,6 @@ mb_params = {
 technique_params = {
     'Galvanostatic Cycling with Potential Limitation': gcpl_params,
     'Cyclic Voltammetry': cv_params,
-    'Open Circuit Voltage': ocv_params,
     'Chronoamperometry / Chronocoulometry': ca_params,
     'Chronopotentiometry': cp_params,
     'Wait': wait_params,
@@ -342,6 +344,15 @@ technique_params = {
     'Linear Sweep Voltammetry': lsv_params,
     'Loop': loop_params,
 }
+
+
+def construct_ocv_params(settings: list[str]) -> list[str]:
+    """Constructs the parameter names for the OCV technique."""
+    params = ocv_params['head']
+    record_match = re.search(r'record.+', '\n'.join(settings))
+    if record_match:
+        params += ['record']
+    return params + ocv_params['tail']
 
 
 def construct_mb_params(settings: list[str]) -> list[str]:
@@ -496,15 +507,25 @@ cv_params_dtype = np.dtype([
     ('Ef_vs', '|u1'),
 ])
 
-ocv_params_dtype = np.dtype([
-    ('tR', '<f4'),
-    ('dER/dt', '<f4'),
-    ('record', '|u1'),
-    ('dER', '<f4'),
-    ('dtR', '<f4'),
-    ('E_range_min', '<f4'),
-    ('E_range_max', '<f4'),
-])
+ocv_params_dtypes = {
+    7: np.dtype([
+        ('tR', '<f4'),
+        ('dER/dt', '<f4'),
+        ('record', '|u1'),
+        ('dER', '<f4'),
+        ('dtR', '<f4'),
+        ('E_range_min', '<f4'),
+        ('E_range_max', '<f4'),
+    ]),
+    6: np.dtype([
+        ('tR', '<f4'),
+        ('dER/dt', '<f4'),
+        ('dER', '<f4'),
+        ('dtR', '<f4'),
+        ('E_range_min', '<f4'),
+        ('E_range_max', '<f4'),
+    ]),
+}
 
 ca_params_dtype = np.dtype([
     ('Ei', '<f4'),
@@ -849,7 +870,7 @@ zir_params_dtype = np.dtype([
 technique_params_dtypes = {
     0x04: ('GCPL', gcpl_params_dtype),
     0x06: ('CV', cv_params_dtype),
-    0x0B: ('OCV', ocv_params_dtype),
+    0x0B: ('OCV', ocv_params_dtypes),
     0x18: ('CA', ca_params_dtype),
     0x19: ('CP', cp_params_dtype),
     0x1C: ('WAIT', wait_params_dtype),

@@ -51,7 +51,8 @@ settings_dtypes = {
     0x024c: ('characteristic_mass', '<f4'),
     0x025c: ('battery_capacity', '<f4'),
     0x0260: ('battery_capacity_unit', '|u1'),
-    # The compliance limits are not always at this offset.
+    # The compliance limits are not always at this offset, hence
+    # commented out...
     # 0x19d2: ('compliance_min', '<f4'),1
     # 0x19d6: ('compliance_max', '<f4'),
 }
@@ -164,7 +165,7 @@ data_column_dtypes = {
 
 # Relates the offset in the log DATA to the corresponding dtype.
 log_dtypes = {
-    # TODO: Sort this out.
+    # TODO: The log module is still pretty unexplored.
     # 0x01d7: ('safety_limits_t', '<f4'),
     # 0x01??: ('safety_limits_ewe_max', '<f4'),
     # 0x01??: ('safety_limits_ewe_min', '<f4'),
@@ -177,7 +178,8 @@ log_dtypes = {
     # 0x01??: ('safety_limits_flags', '|u1'),
     0x01f8: ('ewe_ctrl_min', '<f4'),
     0x01fc: ('ewe_ctrl_max', '<f4'),
-    # 0x0200: ('safety_limits', '') # TODO The safety limits are in here maybe?
+    # TODO The safety limits are in here maybe?
+    # 0x0200: ('safety_limits', '')
     0x0249: ('ole_timestamp', '<f8'),
     0x0251: ('filename', 'pascal'),
     0x0351: ('host', 'pascal'),

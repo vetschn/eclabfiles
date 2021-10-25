@@ -16,7 +16,8 @@ from io import StringIO
 import pandas as pd
 
 from .techniques import (construct_geis_params, construct_mb_params,
-                         construct_peis_params, technique_params)
+                         construct_ocv_params, construct_peis_params,
+                         technique_params)
 
 
 def _parse_technique_params(technique: str, settings: list[str]) -> dict:
@@ -44,6 +45,8 @@ def _parse_technique_params(technique: str, settings: list[str]) -> dict:
         # The easy case.
         params_keys = technique_params[technique]
     # The more complicated case.
+    elif technique == 'Open Circuit Voltage':
+        params_keys = construct_ocv_params(settings)
     elif technique == 'Potentio Electrochemical Impedance Spectroscopy':
         params_keys = construct_peis_params(settings)
     elif technique == 'Galvano Electrochemical Impedance Spectroscopy':
