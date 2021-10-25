@@ -103,6 +103,7 @@ def _load_technique_data(
         for technique in techniques:
             if technique['technique'] in {'Wait', 'Loop'}:
                 continue
+            logging.debug(f"Parsing .mpr file: {mpr_paths[i]}")
             technique['data']['mpr'] = parse_mpr(mpr_paths[i])
             i += 1
     # Parse any MPT files.
@@ -113,6 +114,7 @@ def _load_technique_data(
         for technique in techniques:
             if technique['technique'] in {'Wait', 'Loop'}:
                 continue
+            logging.debug(f"Parsing .mpt file: {mpt_paths[i]}")
             technique['data']['mpt'] = parse_mpt(mpt_paths[i])
             i += 1
     return techniques
