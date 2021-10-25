@@ -94,7 +94,7 @@ def to_df(path: str) -> Union[pd.DataFrame, list[pd.DataFrame]]:
     __, ext = os.path.splitext(path)
     if ext == '.mpt':
         mpt = parse_mpt(path)
-        mpt_records = mpt['data']
+        mpt_records = mpt['datapoints']
         df = pd.DataFrame.from_dict(mpt_records)
     elif ext == '.mpr':
         mpr = parse_mpr(path)
@@ -104,12 +104,12 @@ def to_df(path: str) -> Union[pd.DataFrame, list[pd.DataFrame]]:
         mps = parse_mps(path, load_data=True)
         df = []
         for technique in mps['techniques']:
-            if 'data' not in technique.keys():
+            if 'data' not in technique:
                 continue
             data = technique['data']
-            # It's intentional to prefer MPT over MPR files.
+            # It's intentional to prefer MPT over MPR files here.
             if 'mpt' in data.keys():
-                mpt_records = data['mpt']['data']
+                mpt_records = data['mpt']['datapoints']
                 mpt_df = pd.DataFrame.from_dict(mpt_records)
                 df.append(mpt_df)
             elif 'mpr' in data.keys():
