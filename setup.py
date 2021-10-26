@@ -27,6 +27,5 @@ setuptools.setup(
     package_dir={'': 'src'},
     packages=setuptools.find_packages(where='eclabfiles'),
     install_requires=['numpy', 'pandas', 'openpyxl'],
-    python_requires='>=3.8',
-    entry_points={'console_scripts': ['eclabfiles=eclabfiles.main']},
+    python_requires='>=3.9',
 )
