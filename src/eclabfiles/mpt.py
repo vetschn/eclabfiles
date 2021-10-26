@@ -61,14 +61,13 @@ def _parse_technique_params(technique: str, settings: list[str]) -> dict:
     params = settings[-len(params_keys):]
     # The sequence param columns are always allocated 20 characters.
     n_sequences = int(len(params[0])/20)
-    logging.debug(f"Determined {n_sequences} technique sequences.")
+    logging.debug(f"Found {n_sequences} technique sequences.")
     params_values = []
     for seq in range(1, n_sequences):
         params_values.append(
             [param[seq*20:(seq+1)*20].strip() for param in params])
     # TODO: Translate the parameters from str to the appropriate type.
     params = [dict(zip(params_keys, values)) for values in params_values]
-    logging.debug(f"Found params: {params}")
     return params, len(params_keys)
 
 
@@ -138,7 +137,7 @@ def _parse_header(lines: list[str], n_header_lines: int) -> dict:
     header['params'], n_params = _parse_technique_params(
         technique_name, settings_lines)
     header['settings'] = [line.strip() for line in settings_lines[:n_params]]
-    if len(header_sections) == 3:
+    if len(header_sections) == 3 and header_sections[2]:
         # The header contains a loops section.
         loops_lines = header_sections[2].split('\n')
         header['loops'] = _parse_loop_indexes(loops_lines)
