@@ -2,15 +2,13 @@
 
 This is a package to parse files from BioLogic's EC-Lab. The parsers build on [Chris Kerr's `galvani` package](https://github.com/chatcannon/galvani) and on the work of a previous civilian service member at Empa Lab 501, Jonas Krieger.
 
-```python
->>> import eclabfiles as ecf
+```bash
+> pip install eclabfiles
 ```
 
-## Usage
----
+## Example Usage
 
 ### `parse`
----
 
 Parse the data as it is stored in the corresponding file. The method automatically determines filetype and tries to apply the respective parser.
 
@@ -23,7 +21,6 @@ The returned data structure may look quite different depending on which file typ
 
 
 ### `to_df`
----
 
 Parse the file and transform only the data part into a Pandas `DataFrame`. 
 
@@ -37,7 +34,6 @@ If the given file is an `.mps` settings file, then the program tries to read the
 
 
 ### `to_csv`
----
 
 Parse the file and write the data part into a `.csv` file at the specified location.
 
@@ -52,7 +48,6 @@ If the file is a settings file, this method does as `to_df()` does and writes mu
 
 
 ### `to_xlsx`
----
 
 Parse the file and write the data part into an Excel `.xlsx` file at the specified location.
 
@@ -65,9 +60,9 @@ The `xlsx_path` parameter is optional. If left away, the method writes a `.xlsx`
 
 If the file is a settings file, this method writes multiple numbered sheets into the Excel file.
 
+---
 
 ## Filetypes
----
 
 The file types that are implemented are:
 
@@ -79,9 +74,9 @@ The `.mpt` files generally contain a few more data columns than the correspondin
 
 The `.mps` files simply relate different techniques together and store no data, while the other files contain the measurements.
 
+---
 
 ## Techniques
----
 
 The techniques implemented are:
 
@@ -99,7 +94,6 @@ The techniques implemented are:
 - `ZIR` (TODO for .mpr)
 
 ### Notes on implementing further techniques
----
 
 In the best case you should have an `.mps`, `.mpr` and `.mpt` files ready that contain the technique you would like to implement.
 
