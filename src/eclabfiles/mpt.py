@@ -122,10 +122,15 @@ def _parse_header(lines: list[str], n_header_lines: int) -> dict:
     logging.debug("Parsing the `.mpt` header...")
     header = {}
     if n_header_lines == 3:
-        logging.debug("No settings present in given .mpt file.")
+        logging.debug("No settings or loops present in given .mpt file.")
         return header
     # At this point the first two lines have already been read.
     header_lines = lines[:n_header_lines-3]
+    if header_lines[0].startswith(r'Number of loops : '):
+        logging.debug(
+            "No settings but a loops section present in given .mpt file.")
+        header['loops'] = _parse_loop_indexes(header_lines)
+        return header
     header_sections = ''.join(header_lines).split(sep='\n\n')
     technique_name = header_sections[0].strip()
     settings_lines = header_sections[1].split('\n')
