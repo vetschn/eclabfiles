@@ -5,7 +5,7 @@ import setuptools
 
 setuptools.setup(
     name="eclabfiles",
-    version="0.3.2",
+    version="0.3.3",
     author="Nicolas Vetsch",
     author_email="vetschnicolas@gmail.com",
     description="Parsing and converting of files from BioLogic's EC-Lab.",
