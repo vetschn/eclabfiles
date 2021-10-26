@@ -275,7 +275,7 @@ geis_params = {
         'Ia/Va',
         'Ia',
         'Ia_unit',
-        'va_pourcent', # Random French parameter name?
+        'va_pourcent',  # Random French parameter name?
         'pw',
         'Na',
         'corr',
@@ -333,7 +333,8 @@ mb_params = {
 
 # Relate the technique name with the corresponding list of parameter
 # keys. This dict only includes techniques that do not have a changing
-# number of parameters.
+# number of parameters. The rest have to be handled in
+# mpt._parse_technique_params()
 technique_params = {
     'Galvanostatic Cycling with Potential Limitation': gcpl_params,
     'Cyclic Voltammetry': cv_params,

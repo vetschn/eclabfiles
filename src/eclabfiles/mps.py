@@ -19,7 +19,8 @@ from .techniques import (construct_geis_params, construct_mb_params,
 
 
 def _parse_header(headers: list[str]) -> dict:
-    """Parses the header of an MPS file."""
+    """Parses the header of a .mps file."""
+    logging.debug("Parsing the `.mps` header...")
     header = {}
     header['filename'] = headers[0].strip().split()[-1]
     header['general_settings'] = [line.strip()
@@ -28,7 +29,8 @@ def _parse_header(headers: list[str]) -> dict:
 
 
 def _parse_techniques(technique_sections: list[str]) -> list:
-    """Parses the techniques section of an MPS file."""
+    """Parses the techniques section of a .mps file."""
+    logging.debug("Parsing the techniques section of the `.mps` file...")
     techniques = []
     for section in technique_sections:
         technique = {}
@@ -52,8 +54,11 @@ def _parse_techniques(technique_sections: list[str]) -> list:
         else:
             raise NotImplementedError(
                 f"Technique '{technique_name}' not implemented.")
+        logging.debug(f"Determined a parameter set of length {len(params_keys)} "
+                  f"for `{technique_name}` technique.")
         # The sequence param columns are always allocated 20 characters.
         n_sequences = int(len(params[0])/20)
+        logging.debug(f"Determined {n_sequences} technique sequences.")
         params_values = []
         for seq in range(1, n_sequences):
             params_values.append(
@@ -80,9 +85,9 @@ def _load_technique_data(
     techniques
         The previously parsed list of technique dicts.
     mpr_paths
-        A list of paths to MPR files to read in.
+        A list of paths to .mpr files to read in.
     mpt_paths
-        A list of paths to MPT files to read in.
+        A list of paths to .mpt files to read in.
 
     Returns
     -------
@@ -90,6 +95,9 @@ def _load_technique_data(
         The list of technique dictionaries now including any data.
 
     """
+    logging.debug(
+        f"Trying to load data from {len(mpr_paths)} .mpr files and "
+        f"{len(mpt_paths)} .mpt files...")
     # Determine the number of files that are expected and initialize the
     # data sections. Loops and wait do not write data.
     n_expected_files = 0
@@ -98,7 +106,7 @@ def _load_technique_data(
             continue
         n_expected_files += 1
         technique['data'] = {}
-    # Parse any MPR files.
+    # Parse any .mpr files.
     if n_expected_files == len(mpr_paths):
         # Sorting is assumed to put the files in the right order.
         mpr_paths = sorted(mpr_paths)
@@ -106,10 +114,9 @@ def _load_technique_data(
         for technique in techniques:
             if technique['technique'] in {'Wait', 'Loop'}:
                 continue
-            logging.debug(f"Parsing .mpr file: {mpr_paths[i]}")
             technique['data']['mpr'] = parse_mpr(mpr_paths[i])
             i += 1
-    # Parse any MPT files.
+    # Parse any .mpt files.
     if n_expected_files == len(mpt_paths):
         # Sorting is assumed to put the files in the right order.
         mpt_paths = sorted(mpt_paths)
@@ -117,52 +124,49 @@ def _load_technique_data(
         for technique in techniques:
             if technique['technique'] in {'Wait', 'Loop'}:
                 continue
-            logging.debug(f"Parsing .mpt file: {mpt_paths[i]}")
             technique['data']['mpt'] = parse_mpt(mpt_paths[i])
             i += 1
     return techniques
 
 
 def parse_mps(path: str, load_data: bool = True) -> dict:
-    """Parses an EC-Lab MPS file.
+    """Parses an EC-Lab .mps file.
 
-    If there are MPR or MPT files present in the same folder, those
-    files are read in and returned as well. MPT files are preferred, as
+    If there are .mpr or .mpt files present in the same folder, those
+    files are read in and returned as well. .mpt files are preferred, as
     they contain slightly more info.
 
     Parameters
     ----------
     path
-        Filepath of the EC-Lab MPS file to read in.
+        Filepath of the EC-Lab .mps file to read in.
     parse_data
         Whether to parse the associated data
 
     Returns
     -------
     dict
-        A dict containing all the parsed MPS data and MPT/MPR data in
+        A dict containing all the parsed .mps data and .mpt/.mpr data in
         case it exists.
 
     """
     file_magic = 'EC-LAB SETTING FILE\n'
     with open(path, 'r', encoding='windows-1252') as mps:
         if mps.readline() != file_magic:
-            raise ValueError("Invalid file magic for given MPS file.")
-        logging.info("Reading `.mps` file...")
+            raise ValueError("Invalid file magic for given .mps file.")
+        logging.debug("Reading `.mps` file...")
         sections = mps.read().split('\n\n')
         n_linked_techniques = int(sections[0].strip().split()[-1])
-        logging.info("Parsing `.mps` header...")
         header = _parse_header(sections[1:3])
-        logging.info("Parsing `.mps` techniques...")
         techniques = _parse_techniques(sections[3:])
     if len(techniques) != n_linked_techniques:
         raise ValueError(
-            "The number of parsed techniques does not match the number "
-            "of linked techniques in the header.")
+            f"The number of parsed techniques ({len(techniques)}) does not "
+            f"match the number of linked techniques in the header "
+            f"({n_linked_techniques}).")
     base_path, __ = os.path.splitext(path)
     mpr_paths = glob.glob(base_path + '*.mpr')
     mpt_paths = glob.glob(base_path + '*.mpt')
     if (load_data and (mpr_paths or mpt_paths)):
-        logging.info("Loading technique data from `.mpt`/`.mpr`...")
         techniques = _load_technique_data(techniques, mpr_paths, mpt_paths)
     return {'header': header, 'techniques': techniques}

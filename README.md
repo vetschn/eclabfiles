@@ -105,9 +105,9 @@ In the best case you should have an `.mps`, `.mpr` and `.mpt` files ready that c
 
 For the parsing of EC-Lab ASCII files (`.mpt`/`.mps`) you simply add a `list` of parameter names in `technique_params.py` as they appear in these text files. If the technique has a changing number of parameters in these ASCII files, e.g. it contains a modifiable number of 'Limits' or 'Records', define the technique as a dictionary containing `head` and `tail`, like with `PEIS`. Then also write a function that completes the technique parameters (compare `construct_peis_params`). 
 
-Make sure to also add the list of technique parameters into the `technique_params` dictionary or to add a case for the technique in `_parse_technique_params` / `_parse_techniques` in the `mpt_parser.py` / `mps_parser.py` modules.
+Make sure to also add the list of technique parameters into the `technique_params` dictionary or to add a case for the technique in `_parse_technique_params` / `_parse_techniques` in the `mpt.py` / `mps.py` modules.
 
-If you want to implement the technique in the `.mpr` file parser, you will need to define a corresponding Numpy `dtype` in the `technique_params.py` module. I would recommend getting a solid hex editor (e.g. Hexinator, Hex Editor Neo) to find the actual binary data type of each parameter. 
+If you want to implement the technique in the `.mpr` file parser, you will need to define a corresponding Numpy `dtype` in the `technique_params.py` module. I would recommend getting a solid hex editor (e.g. Hexinator, Hex Editor Neo) to find the actual binary data type of each parameter.
 
 From the `.mpr` files I have seen, you will usually find the parameters at an offset of `0x1845` from the start of the data section in the `VMP settings` module or somewhere around there. Compare the parameter values in the binary data to the values in the corresponding ASCII files. 
 

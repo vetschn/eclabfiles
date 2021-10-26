@@ -40,6 +40,7 @@ def _parse_technique_params(technique: str, settings: list[str]) -> dict:
         A list of parameter keys corresponding to the given technique.
 
     """
+    logging.debug("Parsing technique parameters from `.mpt` header section...")
     params_keys = []
     if technique in technique_params.keys():
         # The easy case.
@@ -54,17 +55,17 @@ def _parse_technique_params(technique: str, settings: list[str]) -> dict:
     elif technique == 'Modulo Bat':
         params_keys = construct_mb_params(settings)
     else:
-        raise NotImplementedError(f"Technique '{technique}' not implemented.")
-    logging.debug(f"Constructed a parameter set of length {len(params_keys)}.")
+        raise NotImplementedError(f"Technique `{technique}` not implemented.")
+    logging.debug(f"Determined a parameter set of length {len(params_keys)} "
+                  f"for `{technique}` technique.")
     params = settings[-len(params_keys):]
-    logging.debug(f"params in settings: {params}")
     # The sequence param columns are always allocated 20 characters.
     n_sequences = int(len(params[0])/20)
-    logging.debug(f"Found {n_sequences} sequences")
+    logging.debug(f"Determined {n_sequences} technique sequences.")
     params_values = []
     for seq in range(1, n_sequences):
-        params_values.append([param[seq*20:(seq+1)*20].strip()
-                             for param in params])
+        params_values.append(
+            [param[seq*20:(seq+1)*20].strip() for param in params])
     # TODO: Translate the parameters from str to the appropriate type.
     params = [dict(zip(params_keys, values)) for values in params_values]
     logging.debug(f"Found params: {params}")
@@ -72,15 +73,15 @@ def _parse_technique_params(technique: str, settings: list[str]) -> dict:
 
 
 def _parse_loop_indexes(loops_lines: list[str]) -> dict:
-    """Parses the loops section of an MPT file header.
+    """Parses the loops section of an .mpt file header.
 
     The function puts together the loop indexes like they are saved in
-    MPR files.
+    .mpr files.
 
     Parameters
     ----------
     loops_lines
-        The MPT file loops section as a list of strings.
+        The .mpt file loops section as a list of strings.
 
     Returns
     -------
@@ -88,6 +89,7 @@ def _parse_loop_indexes(loops_lines: list[str]) -> dict:
         A dictionary with the number of loops and the loop indexes.
 
     """
+    logging.debug("Parsing the loops section in the `.mpt` header...")
     n_loops = int(
         re.match(r'Number of loops : (?P<val>.+)', loops_lines[0])['val'])
     loop_indexes = []
@@ -100,14 +102,14 @@ def _parse_loop_indexes(loops_lines: list[str]) -> dict:
 
 
 def _parse_header(lines: list[str], n_header_lines: int) -> dict:
-    """Parses the header part of an MPT file including loops.
+    """Parses the header part of an .mpt file including loops.
 
     Parameters
     ----------
     lines
-        All the lines of the MPT file (except the two very first ones).
+        All the lines of the .mpt file (except the two very first ones).
     n_header_lines
-        The number of header lines from the line after the MPT file
+        The number of header lines from the line after the .mpt file
         magic.
 
     Returns
@@ -117,9 +119,10 @@ def _parse_header(lines: list[str], n_header_lines: int) -> dict:
         settings, and a list of technique parameters.
 
     """
+    logging.debug("Parsing the `.mpt` header...")
     header = {}
     if n_header_lines == 3:
-        logging.info("No settings present in given MPT file.")
+        logging.debug("No settings present in given .mpt file.")
         return header
     # At this point the first two lines have already been read.
     header_lines = lines[:n_header_lines-3]
@@ -138,14 +141,14 @@ def _parse_header(lines: list[str], n_header_lines: int) -> dict:
 
 
 def _parse_datapoints(lines: list[str], n_header_lines: int) -> list[dict]:
-    """Parses the data part of an MPT file.
+    """Parses the data part of an .mpt file.
 
     Parameters
     ----------
     lines
-        All the lines of the MPT file as a list.
+        All the lines of the .mpt file as a list.
     n_header_lines
-        The number of header lines parsed from the top of the MPT file.
+        The number of header lines parsed from the top of the .mpt file.
 
     Returns
     -------
@@ -153,40 +156,39 @@ def _parse_datapoints(lines: list[str], n_header_lines: int) -> list[dict]:
         A list of dicts, each corresponding to a single data point.
 
     """
+    logging.debug("Parsing the datapoints...")
     # At this point the first two lines have already been read.
     data_lines = lines[n_header_lines-3:]
     data = pd.read_csv(
         StringIO(''.join(data_lines)),
         sep='\t',
         encoding='windows-1252')
-    # Remove the extra column due to an extra tab in MPT files.
+    # Remove the extra column due to an extra tab in .mpt files.
     data = data.iloc[:, :-1]
     return data.to_dict(orient='records')
 
 
 def parse_mpt(path: str) -> dict:
-    """Parses an EC-Lab MPT file.
+    """Parses an EC-Lab .mpt file.
 
     Parameters
     ----------
     path
-        Filepath of the EC-Lab MPT file to read in.
+        Filepath of the EC-Lab .mpt file to read in.
 
     Returns
     -------
     dict
-        A dict containing all the parsed MPT data.
+        A dict containing all the parsed .mpt data.
 
     """
     file_magic = 'EC-Lab ASCII FILE\n'
     with open(path, 'r', encoding='windows-1252') as mpt:
         if mpt.readline() != file_magic:
-            raise ValueError("Invalid file magic for given MPT file.")
-        logging.info("Reading `.mpt` file...")
+            raise ValueError("Invalid file magic for given .mpt file.")
+        logging.debug("Reading `.mpt` file...")
         n_header_lines = int(mpt.readline().strip().split()[-1])
         lines = mpt.readlines()
-        logging.info("Parsing `.mpt` header...")
         header = _parse_header(lines, n_header_lines)
-        logging.info("Parsing `.mpt` data...")
         datapoints = _parse_datapoints(lines, n_header_lines)
     return {'header': header, 'datapoints': datapoints}

@@ -51,8 +51,8 @@ settings_dtypes = {
     0x024c: ('characteristic_mass', '<f4'),
     0x025c: ('battery_capacity', '<f4'),
     0x0260: ('battery_capacity_unit', '|u1'),
-    # The compliance limits are not always at this offset, hence
-    # commented out...
+    # NOTE: The compliance limits are apparently not always at this
+    # offset, hence commented out...
     # 0x19d2: ('compliance_min', '<f4'),1
     # 0x19d6: ('compliance_max', '<f4'),
 }
@@ -64,8 +64,8 @@ flag_column_dtypes = {
     0x0003: ('error', '|b1', 0x08),
     0x0015: ('control changes', '|b1', 0x10),
     0x001F: ('Ns changes', '|b1', 0x20),
-    # NOTE: I think the missing bitmask (0x40) is a stop bit. It
-    # appears in the flag bytes of the very last data point.
+    # NOTE: I think the missing bitmask (0x40) is a stop bit. It appears
+    # in the flag bytes of the very last data point.
     0x0041: ('counter inc.', '|b1', 0x80),
 }
 
@@ -164,22 +164,15 @@ data_column_dtypes = {
 }
 
 # Relates the offset in the log DATA to the corresponding dtype.
+# TODO: The log module is still sort of unclear.
+# NOTE: The safety limits are maybe at 0x200?
+# NOTE: The log also seems to contain the settings again. These are left
+# away for now.
+# NOTE: Looking at the .mpl files, the log module appears to consist of
+# multiple 'modify on' sections that start with an OLE timestamp.
 log_dtypes = {
-    # TODO: The log module is still pretty unexplored.
-    # 0x01d7: ('safety_limits_t', '<f4'),
-    # 0x01??: ('safety_limits_ewe_max', '<f4'),
-    # 0x01??: ('safety_limits_ewe_min', '<f4'),
-    # 0x01??: ('safety_limits_i', '<f4'),
-    # 0x01??: ('safety_limits_q', '<f4'),
-    # 0x01??: ('safety_limits_an_in1', '<f4'),
-    # 0x01??: ('safety_limits_an_in2', '<f4'),
-    # 0x01??: ('safety_limits_e_stack_max', '<f4'),
-    # 0x01??: ('safety_limits_e_stack_min', '<f4'),
-    # 0x01??: ('safety_limits_flags', '|u1'),
     0x01f8: ('ewe_ctrl_min', '<f4'),
     0x01fc: ('ewe_ctrl_max', '<f4'),
-    # TODO The safety limits are in here maybe?
-    # 0x0200: ('safety_limits', '')
     0x0249: ('ole_timestamp', '<f8'),
     0x0251: ('filename', 'pascal'),
     0x0351: ('host', 'pascal'),
@@ -188,17 +181,12 @@ log_dtypes = {
     0x03be: ('server_version', 'pascal'),
     0x03c5: ('interpreter_version', 'pascal'),
     0x03cf: ('device_sn', 'pascal'),
-    # The log also seems to contain the settings again. These are left
-    # away for now.
-    # TODO: Parse the settings again here.
-    # NOTE: Looking at the .mpl files, the log module appears to consist of
-    # multiple 'modify on' sections that start with an OLE timestamp.
     0x0922: ('averaging_points', '|u1'),
 }
 
 
 def _read_pascal_string(bytes: bytes) -> bytes:
-    """Parses a variable-length length-prefixed string.
+    """Parses a length-prefixed string.
 
     Parameters
     ----------
@@ -299,7 +287,8 @@ def _parse_settings(data: bytes) -> dict:
         offset, (name, dtype) = item
         settings[name] = _read_value(data, offset, dtype)
     # Then determine the technique parameters. The parameters' offset
-    # changes depending on the technique present.
+    # changes depending on the technique present and apparently some
+    # other factor that is unclear to me.
     params_offset = None
     for offset in {0x0572, 0x1846, 0x1845}:
         n_params = _read_value(data, offset+0x0002, '<u2')
@@ -351,6 +340,7 @@ def _construct_data_dtype(column_ids: list[int]) -> tuple[np.dtype, dict]:
         A numpy dtype for the given columns, a dict of flags.
 
     """
+    logging.debug("Constructing column dtype from column IDs...")
     column_dtypes = []
     flags = {}
     for id in column_ids:
@@ -358,6 +348,7 @@ def _construct_data_dtype(column_ids: list[int]) -> tuple[np.dtype, dict]:
             name, dtype, bitmask = flag_column_dtypes[id]
             flags[name] = (bitmask, dtype)
             if ('flags', '|u1') in column_dtypes:
+                # No need to add flags column again.
                 continue
             column_dtypes.append(('flags', '|u1'))
         elif id in data_column_dtypes:
@@ -387,19 +378,27 @@ def _parse_data(data: bytes, version: int) -> dict:
     n_datapoints = _read_value(data, 0x0000, '<u4')
     n_columns = _read_value(data, 0x0004, '|u1')
     column_ids = _read_values(data, 0x0005, '<u2', n_columns)
-    logging.debug("Constructing column dtype from column IDs...")
     data_dtype, flags = _construct_data_dtype(column_ids)
     # Depending on the version in the header, the data points start at a
     # different point in the data part.
-    logging.debug(f"Reading {n_datapoints} data points...")
     if version == 2:
+        logging.debug(
+            f"Reading {n_datapoints} data points at an offset of 0x0195 from "
+            f"the start of the data module contents...")
         datapoints = _read_values(data, 0x0195, data_dtype, n_datapoints)
     elif version == 3:
+        logging.debug(
+            f"Reading {n_datapoints} data points at an offset of 0x0196 from "
+            f"the start of the data module contents...")
         datapoints = _read_values(data, 0x0196, data_dtype, n_datapoints)
     else:
+        logging.debug(
+            f"Reading {n_datapoints} data points at an offset of 0x0196 from "
+            f"the start of the data module contents...")
         datapoints = _read_values(data, 0x0196, data_dtype, n_datapoints)
     if flags:
-        # Extract flag values via bitmask (if flags are present).
+        logging.debug(
+            "Extracting flag values via their corresponding bitmask...")
         flag_values = np.array(
             datapoints['flags'],
             dtype=[('flags', '|u1')])
@@ -487,6 +486,7 @@ def _read_modules(file: TextIOWrapper) -> list:
         Returns a list of modules with corresponding header and data.
 
     """
+    logging.debug("Reading `.mpr` modules...")
     modules = []
     while file.read(len(b'MODULE')) == b'MODULE':
         header_bytes = file.read(module_header_dtype.itemsize)
@@ -518,9 +518,7 @@ def parse_mpr(path: str) -> list[dict]:
     with open(path, 'rb') as mpr:
         if mpr.read(len(file_magic)) != file_magic:
             raise ValueError("Invalid file magic for given `.mpr` file.")
-        logging.info("Reading `.mpr` modules...")
         modules = _read_modules(mpr)
-        logging.info("Parsing `.mpr` module data...")
         for module in modules:
             name = module['header']['short_name']
             if name == b'VMP Set   ':

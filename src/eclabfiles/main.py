@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Functions for converting EC-Lab file data to DataFrame, CSV and XLSX.
+"""Functions for converting EC-Lab file data to DataFrame, .csv and .xlsx.
 
 Author:         Nicolas Vetsch (veni@empa.ch / nicolas.vetsch@gmx.ch)
 Organisation:   EMPA Dübendorf, Materials for Energy Conversion (501)
@@ -49,7 +49,7 @@ def parse(path: str) -> Union[list, dict]:
     Parameters
     ----------
     path
-        The path to an EC-Lab file (MPT/MPR/MPS)
+        The path to an EC-Lab file (.mpt/.mpr/.mps)
 
     Returns
     -------
@@ -72,12 +72,13 @@ def to_df(path: str) -> Union[pd.DataFrame, list[pd.DataFrame]]:
     DataFrame(s)
 
     The function finds the file extension and tries to choose the
-    correct parser. If the file is an MPS, returns a list of DataFrames.
+    correct parser. If the file is an .mps, returns a list of
+    DataFrames.
 
     Parameters
     ----------
     path
-        The path to an EC-Lab file (MPT/MPR/MPS)
+        The path to an EC-Lab file (.mpt/.mpr/.mps)
     get_technique (optional)
         Whether to also get the technique name as parsed from the
         original file. Useful for the other file-writing functions.
@@ -86,8 +87,8 @@ def to_df(path: str) -> Union[pd.DataFrame, list[pd.DataFrame]]:
     Returns
     -------
     pd.DataFrame, list[pd.DataFrame]
-        Data parsed from an MPT/MPR file or the data parsed from all
-        techniques in an MPS file. Optionally also the parsed data is
+        Data parsed from an .mpt/.mpr file or the data parsed from all
+        techniques in an .mps file. Optionally also the parsed data is
         returned.
 
     """
@@ -107,7 +108,7 @@ def to_df(path: str) -> Union[pd.DataFrame, list[pd.DataFrame]]:
             if 'data' not in technique:
                 continue
             data = technique['data']
-            # It's intentional to prefer MPT over MPR files here.
+            # It's intentional to prefer .mpt over .mpr files here.
             if 'mpt' in data.keys():
                 mpt_records = data['mpt']['datapoints']
                 mpt_df = pd.DataFrame.from_dict(mpt_records)
@@ -122,17 +123,17 @@ def to_df(path: str) -> Union[pd.DataFrame, list[pd.DataFrame]]:
 
 
 def to_csv(path: str, csv_path: str = None) -> None:
-    """Extracts the data from an MPT/MPR file or from the techniques in
-    an MPS file and writes it to a number of CSV files
+    """Extracts the data from an .mpt/.mpr file or from the techniques
+    in an .mps file and writes it to a number of .csv files.
 
     Parameters
     ----------
     path
         The path to the EC-Lab file to read in.
     csv_path
-        Base path to use for the CSV files. The function automatically
+        Base path to use for the .csv files. The function automatically
         appends the technique number to the file name. Defaults to
-        construct the CSV filename from the mpt_path.
+        construct the .csv filename from the mpt_path.
 
     """
     df = to_df(path)
@@ -152,8 +153,8 @@ def to_csv(path: str, csv_path: str = None) -> None:
 
 
 def to_xlsx(path: str, xlsx_path: str = None) -> None:
-    """Extracts the data from an MPT/MPR file or from the techniques in
-    an MPS file and writes it to an Excel file.
+    """Extracts the data from an .mpt/.mpr file or from the techniques in
+    an .mps file and writes it to an Excel file.
 
     Parameters
     ----------
