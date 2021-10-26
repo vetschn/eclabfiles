@@ -164,7 +164,7 @@ data_column_dtypes = {
 }
 
 # Relates the offset in the log DATA to the corresponding dtype.
-# TODO: The log module is still sort of unclear.
+# NOTE: The log module is still sort of unclear.
 # NOTE: The safety limits are maybe at 0x200?
 # NOTE: The log also seems to contain the settings again. These are left
 # away for now.
@@ -185,7 +185,7 @@ log_dtypes = {
 }
 
 
-def _read_pascal_string(bytes: bytes) -> bytes:
+def _read_pascal_string(pascal_bytes: bytes) -> bytes:
     """Parses a length-prefixed string.
 
     Parameters
@@ -199,9 +199,9 @@ def _read_pascal_string(bytes: bytes) -> bytes:
         The bytes that contain the string.
 
     """
-    if len(bytes) < bytes[0] + 1:
+    if len(pascal_bytes) < pascal_bytes[0] + 1:
         raise ValueError("Insufficient number of bytes.")
-    return bytes[1:bytes[0]+1]
+    return pascal_bytes[1:pascal_bytes[0]+1]
 
 
 def _read_value(data: bytes, offset: int, dtype) -> Any:
@@ -304,8 +304,8 @@ def _parse_settings(data: bytes) -> dict:
             "Unknown parameter offset or unrecognized technique dtype.")
     ns = _read_value(data, params_offset, '<u2')
     logging.debug(
-        f"Reading {ns} parameter sequences starting at an offset of "
-        f"{params_offset} bytes from settings data block...")
+        "Reading %d parameter sequences starting at an offset of %d bytes "
+        "from settings data block...", ns, params_offset)
     params_array = _read_values(data, params_offset+0x0004, params_dtype, ns)
     params = []
     for n in range(ns):
@@ -343,19 +343,19 @@ def _construct_data_dtype(column_ids: list[int]) -> tuple[np.dtype, dict]:
     logging.debug("Constructing column dtype from column IDs...")
     column_dtypes = []
     flags = {}
-    for id in column_ids:
-        if id in flag_column_dtypes:
-            name, dtype, bitmask = flag_column_dtypes[id]
+    for column_id in column_ids:
+        if column_id in flag_column_dtypes:
+            name, dtype, bitmask = flag_column_dtypes[column_id]
             flags[name] = (bitmask, dtype)
             if ('flags', '|u1') in column_dtypes:
                 # No need to add flags column again.
                 continue
             column_dtypes.append(('flags', '|u1'))
-        elif id in data_column_dtypes:
-            column_dtypes.append(data_column_dtypes[id])
+        elif column_id in data_column_dtypes:
+            column_dtypes.append(data_column_dtypes[column_id])
         else:
             raise NotImplementedError(
-                f"Column ID {id} after column {column_dtypes[-1][0]} "
+                f"Column ID {column_id} after column {column_dtypes[-1][0]} "
                 f"is unknown.")
     return np.dtype(column_dtypes), flags
 
@@ -383,18 +383,18 @@ def _parse_data(data: bytes, version: int) -> dict:
     # different point in the data part.
     if version == 2:
         logging.debug(
-            f"Reading {n_datapoints} data points at an offset of 0x0195 from "
-            f"the start of the data module contents...")
+            "Reading %d data points at an offset of 0x0195 from the start of "
+            "the data module contents...", n_datapoints)
         datapoints = _read_values(data, 0x0195, data_dtype, n_datapoints)
     elif version == 3:
         logging.debug(
-            f"Reading {n_datapoints} data points at an offset of 0x0196 from "
-            f"the start of the data module contents...")
+            "Reading %d data points at an offset of 0x0196 from the start of "
+            "the data module contents...", n_datapoints)
         datapoints = _read_values(data, 0x0196, data_dtype, n_datapoints)
     else:
         logging.debug(
-            f"Reading {n_datapoints} data points at an offset of 0x0196 from "
-            f"the start of the data module contents...")
+            "Reading %d data points at an offset of 0x0196 from the start of "
+            "the data module contents...", n_datapoints)
         datapoints = _read_values(data, 0x0196, data_dtype, n_datapoints)
     if flags:
         logging.debug(
@@ -494,8 +494,8 @@ def _read_modules(file: TextIOWrapper) -> list:
             header_bytes, module_header_dtype, count=1)
         header = {key: header_array[key][0]
                   for key in module_header_dtype.names}
-        bytes = file.read(header['length'])
-        modules.append({'header': header, 'data': bytes})
+        data_bytes = file.read(header['length'])
+        modules.append({'header': header, 'data': data_bytes})
     return modules
 
 

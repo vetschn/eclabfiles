@@ -54,16 +54,18 @@ def _parse_techniques(technique_sections: list[str]) -> list:
         else:
             raise NotImplementedError(
                 f"Technique '{technique_name}' not implemented.")
-        logging.debug(f"Determined a parameter set of length {len(params_keys)} "
-                  f"for `{technique_name}` technique.")
+        logging.debug(
+            "Determined a parameter set of length %d for %s technique.",
+            len(params_keys), technique_name)
         # The sequence param columns are always allocated 20 characters.
         n_sequences = int(len(params[0])/20)
-        logging.debug(f"Determined {n_sequences} technique sequences.")
+        logging.debug("Determined %d technique sequences.", n_sequences)
         params_values = []
         for seq in range(1, n_sequences):
             params_values.append(
                 [param[seq*20:(seq+1)*20].strip() for param in params])
-        # TODO: Translate the parameters from str to the appropriate type.
+        # NOTE: The parameters are not translated to their appropriate
+        # type but remain strings.
         params = [dict(zip(params_keys, values)) for values in params_values]
         technique['params'] = params
         techniques.append(technique)
@@ -96,8 +98,8 @@ def _load_technique_data(
 
     """
     logging.debug(
-        f"Trying to load data from {len(mpr_paths)} .mpr files and "
-        f"{len(mpt_paths)} .mpt files...")
+        "Trying to load data from %d .mpr files and %d .mpt files...",
+        len(mpr_paths), len(mpt_paths))
     # Determine the number of files that are expected and initialize the
     # data sections. Loops and wait do not write data.
     n_expected_files = 0

@@ -171,6 +171,7 @@ def to_xlsx(path: str, xlsx_path: str = None) -> None:
     if isinstance(df, pd.DataFrame):
         df.to_excel(xlsx_path, index=False)
     elif isinstance(df, list):
+        # pylint: disable=abstract-class-instantiated
         with pd.ExcelWriter(xlsx_path) as writer:
             for i, df in enumerate(df):
                 df.to_excel(

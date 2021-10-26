@@ -863,7 +863,7 @@ geis_params_dtype = np.dtype([
 ])
 
 zir_params_dtype = np.dtype([
-    # TODO: This module is an exception to a number of rules. See also
+    # NOTE: This module is an exception to a number of rules. See also
     # the settings module and the data module parsers.
 ])
 

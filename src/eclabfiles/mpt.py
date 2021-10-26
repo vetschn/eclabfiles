@@ -54,17 +54,18 @@ def _parse_technique_params(technique: str, settings: list[str]) -> dict:
         params_keys = construct_mb_params(settings)
     else:
         raise NotImplementedError(f"Technique `{technique}` not implemented.")
-    logging.debug(f"Determined a parameter set of length {len(params_keys)} "
-                  f"for `{technique}` technique.")
+    logging.debug("Determined a parameter set of length %d for %s technique.",
+                  len(params_keys), technique)
     params = settings[-len(params_keys):]
     # The sequence param columns are always allocated 20 characters.
     n_sequences = int(len(params[0])/20)
-    logging.debug(f"Found {n_sequences} technique sequences.")
+    logging.debug("Found %d technique sequences.", n_sequences)
     params_values = []
     for seq in range(1, n_sequences):
         params_values.append(
             [param[seq*20:(seq+1)*20].strip() for param in params])
-    # TODO: Translate the parameters from str to the appropriate type.
+    # NOTE: The parameters are not translated to their appropriate type
+    # but remain strings.
     params = [dict(zip(params_keys, values)) for values in params_values]
     return params, len(params_keys)
 
