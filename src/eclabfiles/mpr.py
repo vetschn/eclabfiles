@@ -11,7 +11,7 @@ While there where mostly only `modules` and the `module header` before,
 now pretty much the entire file structure is there for a few relevant
 techniques.
 
-Author:         Nicolas Vetsch (veni@empa.ch / nicolas.vetsch@gmx.ch)
+Author:         Nicolas Vetsch (veni@empa.ch / vetschnicolas@gmail.com)
 Organisation:   EMPA Dübendorf, Materials for Energy Conversion (501)
 Date:           2021-09-29
 

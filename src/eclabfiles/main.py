@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Functions for converting EC-Lab file data to DataFrame, .csv and .xlsx.
 
-Author:         Nicolas Vetsch (veni@empa.ch / nicolas.vetsch@gmx.ch)
+Author:         Nicolas Vetsch (veni@empa.ch / vetschnicolas@gmail.com)
 Organisation:   EMPA Dübendorf, Materials for Energy Conversion (501)
 Date:           2021-10-18
 
@@ -180,14 +180,11 @@ def to_xlsx(path: str, xlsx_path: str = None) -> None:
 def _parse_arguments() -> argparse.Namespace:
     """Parses the arguments if invoked from the command line."""
     parser = argparse.ArgumentParser(
-        description="Process the given file and write it to the specified "
-                    "output file or to a file in the specified format.\n"
-                    "You must specify either the file to write to or the file "
-                    "format.")
+        description=(
+            "Process the given file and write it in the specified file format"))
     parser.add_argument("file", type=str, help="the file to read")
-    parser.add_argument(
-        "-f", "--format", type=str, choices=['csv', 'xlsx'], default='csv',
-        help="type of file to write")
+    parser.add_argument("format", type=str, choices=['csv', 'xlsx'],
+        default='csv', help="type of file to write")
     args = parser.parse_args()
     return args
 

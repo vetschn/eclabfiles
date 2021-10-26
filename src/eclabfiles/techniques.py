@@ -19,7 +19,7 @@ Implemented techniques:
     - WAIT
     - ZIR (TODO for .mpr)
 
-Author:         Nicolas Vetsch (veni@empa.ch / nicolas.vetsch@gmx.ch)
+Author:         Nicolas Vetsch (veni@empa.ch / vetschnicolas@gmail.com)
 Organisation:   EMPA Dübendorf, Materials for Energy Conversion (501)
 Date:           2021-10-18
 
