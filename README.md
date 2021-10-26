@@ -60,7 +60,6 @@ The `xlsx_path` parameter is optional. If left away, the method writes a `.xlsx`
 
 If the file is a settings file, this method writes multiple numbered sheets into the Excel file.
 
----
 
 ## Filetypes
 
@@ -74,7 +73,6 @@ The `.mpt` files generally contain a few more data columns than the correspondin
 
 The `.mps` files simply relate different techniques together and store no data, while the other files contain the measurements.
 
----
 
 ## Techniques
 
