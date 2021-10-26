@@ -5,7 +5,7 @@ import setuptools
 
 setuptools.setup(
     name="eclabfiles",
-    version="0.3.1",
+    version="0.3.2",
     author="Nicolas Vetsch",
     author_email="vetschnicolas@gmail.com",
     description="Parsing and converting of files from BioLogic's EC-Lab.",
@@ -25,7 +25,7 @@ setuptools.setup(
     ],
     keywords=['mpt file', 'mpr file', 'mps file', 'biologic', 'ec-lab'],
     package_dir={'': 'src'},
-    packages=setuptools.find_packages(where='eclabfiles'),
+    packages=setuptools.find_packages(where='src'),
     install_requires=['numpy', 'pandas', 'openpyxl'],
     python_requires='>=3.9',
 )
