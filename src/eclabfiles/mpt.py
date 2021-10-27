@@ -135,7 +135,7 @@ def _parse_header(lines: list[str], n_header_lines: int) -> dict:
     header['technique'] = technique_name
     header['params'], n_params = _parse_technique_params(
         technique_name, settings_lines)
-    header['settings'] = [line.strip() for line in settings_lines[:n_params]]
+    header['settings'] = [line.strip() for line in settings_lines[:-n_params]]
     if len(header_sections) == 3 and header_sections[2]:
         # The header contains a loops section.
         loops_lines = header_sections[2].split('\n')
