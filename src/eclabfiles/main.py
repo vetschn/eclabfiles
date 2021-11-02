@@ -79,10 +79,6 @@ def to_df(path: str) -> Union[pd.DataFrame, list[pd.DataFrame]]:
     ----------
     path
         The path to an EC-Lab file (.mpt/.mpr/.mps)
-    get_technique (optional)
-        Whether to also get the technique name as parsed from the
-        original file. Useful for the other file-writing functions.
-        Defaults to False.
 
     Returns
     -------
@@ -160,7 +156,7 @@ def to_xlsx(path: str, xlsx_path: str = None) -> None:
     ----------
     path
         The path to the EC-Lab file to read in.
-    excel_path (optional)
+    xlsx_path (optional)
         Path to the Excel file to write. Defaults to construct the
         filename from the mpt_path.
 
