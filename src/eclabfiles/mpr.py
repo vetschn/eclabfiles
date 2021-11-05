@@ -21,10 +21,9 @@ from io import TextIOWrapper
 from typing import Any
 
 import numpy as np
-import pandas as pd
 from numpy.lib import recfunctions as rfn
 
-from .techniques import technique_params_dtypes
+from techniques import technique_params_dtypes
 
 # Module header at the top of every MODULE block.
 module_header_dtype = np.dtype([
@@ -255,6 +254,13 @@ def _read_values(data: bytes, offset: int, dtype, count) -> Any:
     return np.frombuffer(data, offset=offset, dtype=dtype, count=count)
 
 
+def _rec_to_dict(rec: np.ndarray) -> dict:
+    """Converts a numpy record array to a dictionary."""
+    dtype = rec.dtype
+    keys = rfn.get_names(dtype)
+    return [{key: row[key] for key in keys} for row in rec]
+
+
 def _parse_settings(data: bytes) -> dict:
     """Parses through the contents of settings modules.
 
@@ -287,7 +293,7 @@ def _parse_settings(data: bytes) -> dict:
         offset, (name, dtype) = item
         settings[name] = _read_value(data, offset, dtype)
     # Then determine the technique parameters. The parameters' offset
-    # changes depending on the technique present and apparently some
+    # changes depending on the technique present and apparently on some
     # other factor that is unclear to me.
     params_offset = None
     for offset in {0x0572, 0x1846, 0x1845}:
@@ -400,24 +406,19 @@ def _parse_data(data: bytes, version: int) -> dict:
         logging.debug(
             "Extracting flag values via their corresponding bitmask...")
         flag_values = np.array(
-            datapoints['flags'],
-            dtype=[('flags', '|u1')])
+            datapoints['flags'], dtype=[('flags', '|u1')])
         for item in flags.items():
             name, (bitmask, flag_dtype) = item
             values = np.array(
-                datapoints['flags'] & bitmask,
-                dtype=[(name, flag_dtype)])
+                datapoints['flags'] & bitmask, dtype=[(name, flag_dtype)])
             flag_values = rfn.merge_arrays(
-                seqarrays=[flag_values, values],
-                flatten=True)
+                seqarrays=[flag_values, values], flatten=True)
         # The flags column has to be removed from the original record to
         # get everything in the order I prefer (if flags column exists).
         datapoints = rfn.rec_drop_fields(datapoints, 'flags')
         datapoints = rfn.merge_arrays(
-            [flag_values, datapoints],
-            flatten=True)
-    datapoints = pd.DataFrame.from_records(datapoints)
-    datapoints = datapoints.to_dict(orient='records')
+            [flag_values, datapoints], flatten=True)
+    datapoints = _rec_to_dict(datapoints)
     data = {
         'n_datapoints': n_datapoints,
         'n_columns': n_columns,
@@ -492,8 +493,8 @@ def _read_modules(file: TextIOWrapper) -> list:
         header_bytes = file.read(module_header_dtype.itemsize)
         header_array = np.frombuffer(
             header_bytes, module_header_dtype, count=1)
-        header = {key: header_array[key][0]
-                  for key in module_header_dtype.names}
+        header = {
+            key: header_array[key][0] for key in module_header_dtype.names}
         data_bytes = file.read(header['length'])
         modules.append({'header': header, 'data': data_bytes})
     return modules
