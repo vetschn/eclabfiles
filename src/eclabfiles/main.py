@@ -64,6 +64,8 @@ def parse(path: str) -> Union[list, dict]:
         parsed = parse_mpr(path)
     elif ext == '.mps':
         parsed = parse_mps(path)
+    else:
+        raise ValueError(f"Unrecognized file extension: {ext}")
     return parsed
 
 
