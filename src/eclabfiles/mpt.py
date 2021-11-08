@@ -54,8 +54,9 @@ def _parse_technique_params(technique: str, settings: list[str]) -> dict:
         params_keys = construct_mb_params(settings)
     else:
         raise NotImplementedError(f"Technique `{technique}` not implemented.")
-    logging.debug("Determined a parameter set of length %d for %s technique.",
-                  len(params_keys), technique)
+    logging.debug(
+        "Determined a parameter set of length %d for %s technique.",
+        len(params_keys), technique)
     params = settings[-len(params_keys):]
     # The sequence param columns are always allocated 20 characters.
     n_sequences = int(len(params[0])/20)
@@ -163,9 +164,7 @@ def _parse_datapoints(lines: list[str], n_header_lines: int) -> list[dict]:
     # At this point the first two lines have already been read.
     data_lines = lines[n_header_lines-3:]
     data = pd.read_csv(
-        StringIO(''.join(data_lines)),
-        sep='\t',
-        encoding='windows-1252')
+        StringIO(''.join(data_lines)), sep='\t', encoding='windows-1252')
     # Remove the extra column due to an extra tab in .mpt files.
     data = data.iloc[:, :-1]
     return data.to_dict(orient='records')
@@ -192,6 +191,6 @@ def parse_mpt(path: str) -> dict:
         logging.debug("Reading `.mpt` file...")
         n_header_lines = int(mpt.readline().strip().split()[-1])
         lines = mpt.readlines()
-        header = _parse_header(lines, n_header_lines)
-        datapoints = _parse_datapoints(lines, n_header_lines)
+    header = _parse_header(lines, n_header_lines)
+    datapoints = _parse_datapoints(lines, n_header_lines)
     return {'header': header, 'datapoints': datapoints}
