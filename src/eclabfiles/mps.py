@@ -23,8 +23,8 @@ def _parse_header(headers: list[str]) -> dict:
     logging.debug("Parsing the `.mps` header...")
     header = {}
     header['filename'] = headers[0].strip().split()[-1]
-    header['general_settings'] = [line.strip()
-                                  for line in headers[1].split('\n')]
+    header['general_settings'] = [
+        line.strip() for line in headers[1].split('\n')]
     return header
 
 
@@ -158,9 +158,9 @@ def parse_mps(path: str, load_data: bool = True) -> dict:
             raise ValueError("Invalid file magic for given .mps file.")
         logging.debug("Reading `.mps` file...")
         sections = mps.read().split('\n\n')
-        n_linked_techniques = int(sections[0].strip().split()[-1])
-        header = _parse_header(sections[1:3])
-        techniques = _parse_techniques(sections[3:])
+    n_linked_techniques = int(sections[0].strip().split()[-1])
+    header = _parse_header(sections[1:3])
+    techniques = _parse_techniques(sections[3:])
     if len(techniques) != n_linked_techniques:
         raise ValueError(
             f"The number of parsed techniques ({len(techniques)}) does not "
