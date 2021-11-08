@@ -23,7 +23,7 @@ from typing import Any
 import numpy as np
 from numpy.lib import recfunctions as rfn
 
-from techniques import technique_params_dtypes
+from .techniques import technique_params_dtypes
 
 # Module header at the top of every MODULE block.
 module_header_dtype = np.dtype([
@@ -520,16 +520,16 @@ def parse_mpr(path: str) -> list[dict]:
         if mpr.read(len(file_magic)) != file_magic:
             raise ValueError("Invalid file magic for given `.mpr` file.")
         modules = _read_modules(mpr)
-        for module in modules:
-            name = module['header']['short_name']
-            if name == b'VMP Set   ':
-                module['data'] = _parse_settings(module['data'])
-            elif name == b'VMP data  ':
-                # The data points' offset depends on the module version.
-                version = module['header']['version']
-                module['data'] = _parse_data(module['data'], version)
-            elif name == b'VMP LOG   ':
-                module['data'] = _parse_log(module['data'])
-            elif name == b'VMP loop  ':
-                module['data'] = _parse_loop(module['data'])
-        return modules
+    for module in modules:
+        name = module['header']['short_name']
+        if name == b'VMP Set   ':
+            module['data'] = _parse_settings(module['data'])
+        elif name == b'VMP data  ':
+            # The data points' offset depends on the module version.
+            version = module['header']['version']
+            module['data'] = _parse_data(module['data'], version)
+        elif name == b'VMP LOG   ':
+            module['data'] = _parse_log(module['data'])
+        elif name == b'VMP loop  ':
+            module['data'] = _parse_loop(module['data'])
+    return modules
