@@ -23,7 +23,7 @@ from typing import Any
 import numpy as np
 from numpy.lib import recfunctions as rfn
 
-from techniques import technique_params_dtypes
+from .techniques import technique_params_dtypes
 
 # Module header at the top of every MODULE block.
 module_header_dtype = np.dtype([
