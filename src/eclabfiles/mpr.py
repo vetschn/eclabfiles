@@ -297,7 +297,7 @@ def _parse_settings(data: bytes) -> dict:
     # changes depending on the technique present and apparently on some
     # other factor that is unclear to me.
     params_offset = None
-    for offset in {0x0572, 0x1846, 0x1845}:
+    for offset in [0x0572, 0x1845, 0x1846]:
         n_params = _read_value(data, offset+0x0002, '<u2')
         if isinstance(params_dtype, dict):
             for dtype in params_dtype.values():
