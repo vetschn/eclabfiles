@@ -23,7 +23,7 @@ from typing import Any
 import numpy as np
 from numpy.lib import recfunctions as rfn
 
-from .techniques import technique_params_dtypes
+from techniques import technique_params_dtypes
 
 # Module header at the top of every MODULE block.
 module_header_dtype = np.dtype([
@@ -306,6 +306,7 @@ def _parse_settings(data: bytes) -> dict:
                     params_offset = offset
         elif len(params_dtype) == n_params:
             params_offset = offset
+            break
     if params_offset is None:
         raise NotImplementedError(
             "Unknown parameter offset or unrecognized technique dtype.")
@@ -534,3 +535,7 @@ def parse_mpr(path: str) -> list[dict]:
         elif name == b'VMP loop  ':
             module['data'] = _parse_loop(module['data'])
     return modules
+
+
+if __name__ == '__main__':
+    parse_mpr(r"G:\Collaborators\Vetsch Nicolas\yet_another_datagram\yadg\tests\test_eclab\gcpl.mpr")
