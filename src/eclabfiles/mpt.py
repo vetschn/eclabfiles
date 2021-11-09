@@ -59,8 +59,8 @@ def _parse_technique_params(technique: str, settings: list[str]) -> dict:
         len(params_keys), technique)
     params = settings[-len(params_keys):]
     # The sequence param columns are always allocated 20 characters.
-    n_sequences = int(len(params[0])/20)
-    logging.debug("Found %d technique sequences.", n_sequences-1)
+    n_sequences = int(len(params[0])/20) + 1
+    logging.debug("Determined %d technique sequences.", n_sequences)
     params_values = []
     for seq in range(1, n_sequences):
         params_values.append(
