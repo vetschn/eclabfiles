@@ -79,6 +79,7 @@ data_column_dtypes = {
     0x000b: ('<I>/mA', '<f8'),
     0x000d: ('(Q-Qo)/mA.h', '<f8'),
     0x0010: ('Analog IN 1/V', '<f4'),
+    0x0011: ('Analog IN 2/V', '<f4'),
     0x0013: ('control/V', '<f4'),
     0x0014: ('control/mA', '<f4'),
     0x0017: ('dQ/mA.h', '<f8'),
