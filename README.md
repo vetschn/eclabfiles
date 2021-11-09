@@ -17,7 +17,7 @@ Parse the data as it is stored in the corresponding file. The method automatical
 >>> ecf.parse("./mpt_files/test_01_OCV.mpt")
 ```
 
-The returned data structure may look quite different depending on which file type you read in as the different filetypes also store the same data in very different ways.
+The returned data structure may look quite different depending on which file type you read in as the different filetypes also store the same data in very different ways. See [section filetypes](#Filetypes)
 
 
 ### `to_df`
@@ -72,6 +72,128 @@ The file types that are implemented are:
 The `.mpt` files generally contain a few more data columns than the corresponding binary `.mpr` files from what I have seen.
 
 The `.mps` files simply relate different techniques together and store no data, while the other files contain the measurements.
+
+### Structure of parsed `.mpt` files
+
+```python
+{
+    'header': {
+        'technique',
+        'settings',
+        'params': {},
+        'loops': {,
+            'n',
+            'indexes': [],
+        },
+    },
+    'datapoints': [{}],
+}
+```
+
+### Structure of parsed `.mpr` files
+
+```python
+[
+    {
+        'header': {
+            'short_name',
+            'long_name',
+            'length',
+            'version',
+            'date',
+        },
+        'data': {
+            'technique',
+            'comments',
+            'active_material_mass',
+            'at_x',
+            'molecular_weight',
+            'atomic_weight',
+            'acquisition_start',
+            'e_transferred',
+            'electrode_material',
+            'electrolyte',
+            'electrode_area',
+            'reference_electrode',
+            'characteristic_mass',
+            'battery_capacity',
+            'battery_capacity_unit',
+            'params': {},
+        },
+    },
+    {
+        'header': {
+            'short_name',
+            'long_name',
+            'length',
+            'version',
+            'date',
+        },
+        'data': {
+            'n_datapoints'
+            'n_columns'
+            'datapoints': [{}]
+        },
+    },
+    {
+        'header': {
+            'short_name',
+            'long_name',
+            'length',
+            'version',
+            'date',
+        },
+        'data': {
+            'ewe_ctrl_min',
+            'ewe_ctrl_max',
+            'ole_timestamp',
+            'filename',
+            'host',
+            'address',
+            'ec_lab_version',
+            'server_version',
+            'interpreter_version',
+            'device_sn',
+            'averaging_points',
+        },
+    },
+    {
+        'header': {
+            'short_name',
+            'long_name',
+            'length',
+            'version',
+            'date',
+        },
+        'data': {
+            'n_indexes',
+            'indexes': [],
+        },
+    },
+]
+```
+
+### Structure of parsed `.mpr` files
+
+```python
+{
+    'header': {
+        'filename',
+        'general_settings': [],
+    },
+    'techniques': [
+        {
+            'technique',
+            'params',
+            'data': {
+                'mpr': [],
+                'mpt': {},
+            },
+        },
+    ],
+}
+```
+
 
 
 ## Techniques
