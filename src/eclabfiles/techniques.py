@@ -877,7 +877,7 @@ technique_params_dtypes = {
     0x1C: ('WAIT', wait_params_dtype),
     0x1D: ('PEIS', peis_params_dtype),
     0x1E: ('GEIS', geis_params_dtype),
-    # 0x32: ('ZIR', zir_params_dtype), TODO
+    # TODO: 0x32: ('ZIR', zir_params_dtype),
     0x6C: ('LSV', lsv_params_dtype),
     0x7F: ('MB', mb_params_dtypes),
 }
