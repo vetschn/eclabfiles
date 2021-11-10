@@ -11,11 +11,11 @@ import glob
 import logging
 import os
 
-from .mpr import parse_mpr
-from .mpt import parse_mpt
-from .techniques import (construct_geis_params, construct_mb_params,
-                         construct_ocv_params, construct_peis_params,
-                         technique_params)
+from eclabfiles.mpr import parse_mpr
+from eclabfiles.mpt import parse_mpt
+from eclabfiles.techniques import (construct_geis_params, construct_mb_params,
+                                   construct_ocv_params, construct_peis_params,
+                                   technique_params)
 
 
 def _parse_header(headers: list[str]) -> dict:

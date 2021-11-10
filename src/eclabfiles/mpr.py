@@ -23,7 +23,7 @@ from typing import Any
 import numpy as np
 from numpy.lib import recfunctions as rfn
 
-from .techniques import technique_params_dtypes
+from eclabfiles.techniques import technique_params_dtypes
 
 # Module header at the top of every MODULE block.
 module_header_dtype = np.dtype([
@@ -538,4 +538,4 @@ def parse_mpr(path: str) -> list[dict]:
 
 
 if __name__ == '__main__':
-    parse_mpr(r"G:\Collaborators\Vetsch Nicolas\yet_another_datagram\yadg\tests\test_eclab\gcpl.mpr")
+    parse_mpr(r"G:\Collaborators\Vetsch Nicolas\yet_another_datagram\yadg\tests\test_eclab\ocv.mpr")
