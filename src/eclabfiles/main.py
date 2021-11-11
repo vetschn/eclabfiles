@@ -174,27 +174,3 @@ def to_xlsx(path: str, xlsx_path: str = None) -> None:
             for i, df in enumerate(df):
                 df.to_excel(
                     writer, sheet_name=f'{i+1:02d}', index=False)
-
-
-def _parse_arguments() -> argparse.Namespace:
-    """Parses the arguments if invoked from the command line."""
-    parser = argparse.ArgumentParser(
-        description=(
-            "Process the given file and write it in the specified file format"))
-    parser.add_argument("file", type=str, help="the file to read")
-    parser.add_argument("format", type=str, choices=['csv', 'xlsx'],
-        default='csv', help="type of file to write")
-    args = parser.parse_args()
-    return args
-
-
-def _run():
-    args = _parse_arguments()
-    if args.format == 'csv':
-        to_csv(args.file)
-    elif args.format == 'xlsx':
-        to_xlsx(args.file)
-
-
-if __name__ == '__main__':
-    _run()
