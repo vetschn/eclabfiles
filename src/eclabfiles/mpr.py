@@ -171,6 +171,8 @@ data_column_dtypes = {
 # NOTE: Looking at the .mpl files, the log module appears to consist of
 # multiple 'modify on' sections that start with an OLE timestamp.
 log_dtypes = {
+    0x0009: ('channel_number', '<u2'),
+    0x00ab: ('channel_sn', '<u2'),
     0x01f8: ('ewe_ctrl_min', '<f4'),
     0x01fc: ('ewe_ctrl_max', '<f4'),
     0x0249: ('ole_timestamp', '<f8'),
@@ -255,16 +257,11 @@ def _read_values(data: bytes, offset: int, dtype, count) -> Any:
     return np.frombuffer(data, offset=offset, dtype=dtype, count=count)
 
 
-def _rec_to_dict(rec: np.ndarray) -> dict:
-    """Converts a numpy record array to a dictionary."""
-    dtype = rec.dtype
-    keys = rfn.get_names(dtype)
-    return [{key: row[key] for key in keys} for row in rec]
-
-
 def _parse_settings(data: bytes) -> dict:
     """Parses through the contents of settings modules.
 
+    Note
+    ----
     Unfortunately this data contains a few pascal strings and some 0x00
     padding, which seems to be incompatible with simply specifying a
     struct in np.dtype and using np.frombuffer() to read the whole thing
@@ -400,10 +397,7 @@ def _parse_data(data: bytes, version: int) -> dict:
             "the data module contents...", n_datapoints)
         datapoints = _read_values(data, 0x0196, data_dtype, n_datapoints)
     else:
-        logging.debug(
-            "Reading %d data points at an offset of 0x0196 from the start of "
-            "the data module contents...", n_datapoints)
-        datapoints = _read_values(data, 0x0196, data_dtype, n_datapoints)
+        raise NotImplementedError(f"Unknown data module version: {version}")
     if flags:
         logging.debug(
             "Extracting flag values via their corresponding bitmask...")
@@ -420,7 +414,10 @@ def _parse_data(data: bytes, version: int) -> dict:
         datapoints = rfn.rec_drop_fields(datapoints, 'flags')
         datapoints = rfn.merge_arrays(
             [flag_values, datapoints], flatten=True)
-    datapoints = _rec_to_dict(datapoints)
+    # Convert the records array into a dictionary.
+    dtype = datapoints.dtype
+    keys = rfn.get_names(dtype)
+    datapoints = [{key: row[key].item() for key in keys} for row in datapoints]
     data = {
         'n_datapoints': n_datapoints,
         'n_columns': n_columns,
@@ -535,7 +532,3 @@ def parse_mpr(path: str) -> list[dict]:
         elif name == b'VMP loop  ':
             module['data'] = _parse_loop(module['data'])
     return modules
-
-
-if __name__ == '__main__':
-    parse_mpr(r"G:\Collaborators\Vetsch Nicolas\yet_another_datagram\yadg\tests\test_eclab\ocv.mpr")
