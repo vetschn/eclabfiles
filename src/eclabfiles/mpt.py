@@ -7,11 +7,11 @@ Organisation:   EMPA Dübendorf, Materials for Energy Conversion (501)
 Date:           2021-10-11
 
 """
+import ast
+import csv
 import logging
 import re
 from io import StringIO
-
-import pandas as pd
 
 from eclabfiles.techniques import (construct_geis_params, construct_mb_params,
                                    construct_ocv_params, construct_peis_params,
@@ -160,14 +160,19 @@ def _parse_datapoints(lines: list[str], n_header_lines: int) -> list[dict]:
         A list of dicts, each corresponding to a single data point.
 
     """
-    logging.debug("Parsing the datapoints...")
     # At this point the first two lines have already been read.
-    data_lines = lines[n_header_lines-3:]
-    data = pd.read_csv(
-        StringIO(''.join(data_lines)), sep='\t', encoding='windows-1252')
-    # Remove the extra column due to an extra tab in .mpt files.
-    data = data.iloc[:, :-1]
-    return data.to_dict(orient='records')
+    logging.debug("Parsing the datapoints...")
+    # Remove the extra column due to an extra tab in .mpt file field
+    # names.
+    field_names = lines[n_header_lines-3].split('\t')[:-1]
+    data_lines = lines[n_header_lines-2:]
+    reader = csv.DictReader(
+        StringIO(''.join(data_lines)), fieldnames=field_names, delimiter='\t')
+    datapoints = list(reader)
+    for datapoint in datapoints:
+        for key, value in datapoint.items():
+            datapoint[key] = ast.literal_eval(value)
+    return datapoints
 
 
 def parse_mpt(path: str) -> dict:
