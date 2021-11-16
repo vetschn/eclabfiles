@@ -7,7 +7,6 @@ Organisation:   EMPA Dübendorf, Materials for Energy Conversion (501)
 Date:           2021-10-18
 
 """
-import argparse
 import os
 from typing import Union
 
@@ -101,20 +100,21 @@ def to_df(path: str) -> Union[pd.DataFrame, list[pd.DataFrame]]:
         df = pd.DataFrame.from_dict(mpr_records)
     elif ext == '.mps':
         mps = parse_mps(path, load_data=True)
+        data = mps['data']
         df = []
-        for technique in mps['techniques']:
-            if 'data' not in technique:
-                continue
-            data = technique['data']
+        if 'mpt' in data.keys():
             # It's intentional to prefer .mpt over .mpr files here.
-            if 'mpt' in data.keys():
-                mpt_records = data['mpt']['datapoints']
+            for mpt in data['mpt']:
+                mpt_records = mpt['datapoints']
                 mpt_df = pd.DataFrame.from_dict(mpt_records)
                 df.append(mpt_df)
-            elif 'mpr' in data.keys():
-                mpr_records = data['mpr'][1]['data']['datapoints']
+        elif 'mpr' in data.keys():
+            for mpr in data['mpr']:
+                mpr_records = mpr[1]['data']['datapoints']
                 mpr_df = pd.DataFrame.from_dict(mpr_records)
                 df.append(mpr_df)
+        else:
+            raise ValueError("The given .mps file does not contain any data.")
     else:
         raise ValueError(f"Unrecognized file extension: {ext}")
     return df
