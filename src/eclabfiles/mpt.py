@@ -7,15 +7,13 @@ Organisation:   EMPA Dübendorf, Materials for Energy Conversion (501)
 Date:           2021-10-11
 
 """
+import csv
 import logging
 import re
 from io import StringIO
 
-import pandas as pd
-
-from .techniques import (construct_geis_params, construct_mb_params,
-                         construct_ocv_params, construct_peis_params,
-                         technique_params)
+from eclabfiles.techniques import construct_params
+from eclabfiles.utils import literal_eval
 
 
 def _parse_technique_params(technique: str, settings: list[str]) -> dict:
@@ -39,34 +37,18 @@ def _parse_technique_params(technique: str, settings: list[str]) -> dict:
 
     """
     logging.debug("Parsing technique parameters from `.mpt` header section...")
-    params_keys = []
-    if technique in technique_params.keys():
-        # The easy case.
-        params_keys = technique_params[technique]
-    # The more complicated case.
-    elif technique == 'Open Circuit Voltage':
-        params_keys = construct_ocv_params(settings)
-    elif technique == 'Potentio Electrochemical Impedance Spectroscopy':
-        params_keys = construct_peis_params(settings)
-    elif technique == 'Galvano Electrochemical Impedance Spectroscopy':
-        params_keys = construct_geis_params(settings)
-    elif technique == 'Modulo Bat':
-        params_keys = construct_mb_params(settings)
-    else:
-        raise NotImplementedError(f"Technique `{technique}` not implemented.")
+    params_keys = construct_params(technique, settings)
     logging.debug(
-        "Determined a parameter set of length %d for %s technique.",
-        len(params_keys), technique)
+        f"Determined a parameter set of length {len(params_keys)} for "
+        f"{technique} technique.")
     params = settings[-len(params_keys):]
     # The sequence param columns are always allocated 20 characters.
-    n_sequences = int(len(params[0])/20) + 1
-    logging.debug("Determined %d technique sequences.", n_sequences)
+    n_sequences = int(len(params[0])/20)
+    logging.debug(f"Determined {n_sequences} technique sequences.")
     params_values = []
     for seq in range(1, n_sequences):
         params_values.append(
-            [param[seq*20:(seq+1)*20].strip() for param in params])
-    # NOTE: The parameters are not translated to their appropriate type
-    # but remain strings.
+            [literal_eval(param[seq*20:(seq+1)*20]) for param in params])
     params = [dict(zip(params_keys, values)) for values in params_values]
     return params, len(params_keys)
 
@@ -160,17 +142,24 @@ def _parse_datapoints(lines: list[str], n_header_lines: int) -> list[dict]:
         A list of dicts, each corresponding to a single data point.
 
     """
-    logging.debug("Parsing the datapoints...")
     # At this point the first two lines have already been read.
-    data_lines = lines[n_header_lines-3:]
-    data = pd.read_csv(
-        StringIO(''.join(data_lines)), sep='\t', encoding='windows-1252')
-    # Remove the extra column due to an extra tab in .mpt files.
-    data = data.iloc[:, :-1]
-    return data.to_dict(orient='records')
+    logging.debug("Parsing the datapoints...")
+    # Remove the extra column due to an extra tab in .mpt file field
+    # names.
+    field_names = lines[n_header_lines-3].split('\t')[:-1]
+    data_lines = lines[n_header_lines-2:]
+    reader = csv.DictReader(
+        StringIO(''.join(data_lines)), fieldnames=field_names, delimiter='\t')
+    datapoints_str = list(reader)
+    datapoints = []
+    for datapoint_str in datapoints_str:
+        datapoint = {
+            key: literal_eval(value) for key, value in datapoint_str.items()}
+        datapoints.append(datapoint)
+    return datapoints
 
 
-def parse_mpt(path: str) -> dict:
+def parse_mpt(path: str, encoding: str = 'windows-1252') -> dict:
     """Parses an EC-Lab .mpt file.
 
     Parameters
@@ -185,10 +174,10 @@ def parse_mpt(path: str) -> dict:
 
     """
     file_magic = 'EC-Lab ASCII FILE\n'
-    with open(path, 'r', encoding='windows-1252') as mpt:
+    with open(path, 'r', encoding=encoding) as mpt:
         if mpt.readline() != file_magic:
-            raise ValueError("Invalid file magic for given .mpt file.")
-        logging.debug("Reading `.mpt` file...")
+            raise ValueError(f"Invalid file magic for given .mpt file: {path}")
+        logging.debug(f"Reading `.mpt` file at {path}")
         n_header_lines = int(mpt.readline().strip().split()[-1])
         lines = mpt.readlines()
     header = _parse_header(lines, n_header_lines)

@@ -11,11 +11,10 @@ import glob
 import logging
 import os
 
-from .mpr import parse_mpr
-from .mpt import parse_mpt
-from .techniques import (construct_geis_params, construct_mb_params,
-                         construct_ocv_params, construct_peis_params,
-                         technique_params)
+from eclabfiles.mpr import parse_mpr
+from eclabfiles.mpt import parse_mpt
+from eclabfiles.techniques import construct_params
+from eclabfiles.utils import literal_eval
 
 
 def _parse_header(headers: list[str]) -> dict:
@@ -38,36 +37,19 @@ def _parse_techniques(technique_sections: list[str]) -> list:
         technique_name = technique_lines[1]
         technique['technique'] = technique_name
         params = technique_lines[2:]
-        params_keys = []
-        if technique_name in technique_params.keys():
-            # The easy case.
-            params_keys = technique_params[technique_name]
-        # The more complicated case.
-        elif technique_name == 'Open Circuit Voltage':
-            params_keys = construct_ocv_params(params)
-        elif technique_name == 'Potentio Electrochemical Impedance Spectroscopy':
-            params_keys = construct_peis_params(params)
-        elif technique_name == 'Galvano Electrochemical Impedance Spectroscopy':
-            params_keys = construct_geis_params(params)
-        elif technique_name == 'Modulo Bat':
-            params_keys = construct_mb_params(params)
-        else:
-            raise NotImplementedError(
-                f"Technique '{technique_name}' not implemented.")
+        params_keys = construct_params(technique_name, params)
         logging.debug(
-            "Determined a parameter set of length %d for %s technique.",
-            len(params_keys), technique_name)
+            f"Determined a parameter set of length {len(params_keys)} for "
+            f"{technique_name} technique.")
         # The sequence param columns are always allocated 20 characters.
-        n_sequences = int(len(params[0])/20) + 1
-        logging.debug("Determined %d technique sequences.", n_sequences)
+        n_sequences = int(len(params[0])/20)
+        logging.debug(f"Determined {n_sequences} technique sequences.")
         params_values = []
         for seq in range(1, n_sequences):
             params_values.append(
-                [param[seq*20:(seq+1)*20].strip() for param in params])
-        # NOTE: The parameters are not translated to their appropriate
-        # type but remain strings.
-        params = [dict(zip(params_keys, values)) for values in params_values]
-        technique['params'] = params
+                [literal_eval(param[seq*20:(seq+1)*20]) for param in params])
+        technique['params'] = [
+            dict(zip(params_keys, values)) for values in params_values]
         techniques.append(technique)
     return techniques
 
@@ -76,11 +58,8 @@ def _load_technique_data(
     techniques: list[dict],
     mpr_paths: list[str],
     mpt_paths: list[str]
-) -> list[dict]:
+) -> dict:
     """Tries to load technique data from the same folder.
-
-    TODO: This can probably be done in a more idiomatic way than what is
-    done here.
 
     Parameters
     ----------
@@ -98,40 +77,28 @@ def _load_technique_data(
 
     """
     logging.debug(
-        "Trying to load data from %d .mpr files and %d .mpt files...",
-        len(mpr_paths), len(mpt_paths))
+        f"Trying to load data from {len(mpr_paths)} .mpr files and "
+        f"{len(mpt_paths)} .mpt files...")
     # Determine the number of files that are expected and initialize the
-    # data sections. Loops and wait do not write data.
-    n_expected_files = 0
-    for technique in techniques:
-        if technique['technique'] in {'Wait', 'Loop'}:
-            continue
-        n_expected_files += 1
-        technique['data'] = {}
-    # Parse any .mpr files.
-    if n_expected_files == len(mpr_paths):
-        # Sorting is assumed to put the files in the right order.
-        mpr_paths = sorted(mpr_paths)
-        i = 0
-        for technique in techniques:
-            if technique['technique'] in {'Wait', 'Loop'}:
-                continue
-            technique['data']['mpr'] = parse_mpr(mpr_paths[i])
-            i += 1
-    # Parse any .mpt files.
-    if n_expected_files == len(mpt_paths):
-        # Sorting is assumed to put the files in the right order.
-        mpt_paths = sorted(mpt_paths)
-        i = 0
-        for technique in techniques:
-            if technique['technique'] in {'Wait', 'Loop'}:
-                continue
-            technique['data']['mpt'] = parse_mpt(mpt_paths[i])
-            i += 1
-    return techniques
+    # data sections. Loops and waits do not write data.
+    expected_techniques = [
+        technique for technique in techniques
+        if technique['technique'] not in {'Loop', 'Wait'}]
+    data = {}
+    if not expected_techniques:
+        return data
+    if len(expected_techniques) == len(mpt_paths):
+        data['mpt'] = [parse_mpt(path) for path in mpt_paths]
+    if len(expected_techniques) == len(mpr_paths):
+        data['mpr'] = [parse_mpr(path) for path in mpr_paths]
+    return data
 
 
-def parse_mps(path: str, load_data: bool = True) -> dict:
+def parse_mps(
+    path: str,
+    encoding: str = 'windows-1252',
+    load_data: bool = True
+) -> dict:
     """Parses an EC-Lab .mps file.
 
     If there are .mpr or .mpt files present in the same folder, those
@@ -153,7 +120,7 @@ def parse_mps(path: str, load_data: bool = True) -> dict:
 
     """
     file_magic = 'EC-LAB SETTING FILE\n'
-    with open(path, 'r', encoding='windows-1252') as mps:
+    with open(path, 'r', encoding=encoding) as mps:
         if mps.readline() != file_magic:
             raise ValueError("Invalid file magic for given .mps file.")
         logging.debug("Reading `.mps` file...")
@@ -170,5 +137,6 @@ def parse_mps(path: str, load_data: bool = True) -> dict:
     mpr_paths = glob.glob(base_path + '*.mpr')
     mpt_paths = glob.glob(base_path + '*.mpt')
     if (load_data and (mpr_paths or mpt_paths)):
-        techniques = _load_technique_data(techniques, mpr_paths, mpt_paths)
+        data = _load_technique_data(techniques, mpr_paths, mpt_paths)
+        return {'header': header, 'techniques': techniques, 'data': data}
     return {'header': header, 'techniques': techniques}

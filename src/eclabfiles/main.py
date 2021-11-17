@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Functions for converting EC-Lab file data to DataFrame, .csv and .xlsx.
+"""Functions for converting parsed EC-Lab file data to DataFrame, .csv
+and .xlsx.
 
 Author:         Nicolas Vetsch (veni@empa.ch / vetschnicolas@gmail.com)
 Organisation:   EMPA Dübendorf, Materials for Energy Conversion (501)
 Date:           2021-10-18
 
 """
-import argparse
 import os
 from typing import Union
 
 import pandas as pd
 
-from .mpr import parse_mpr
-from .mps import parse_mps
-from .mpt import parse_mpt
+from eclabfiles.mpr import parse_mpr
+from eclabfiles.mps import parse_mps
+from eclabfiles.mpt import parse_mpt
 
 
 def _construct_path(other_path: str, ext: str) -> str:
@@ -53,7 +53,7 @@ def parse(path: str) -> Union[list, dict]:
 
     Returns
     -------
-    list or dict
+    Union[list, dict]
         The parsed file.
 
     """
@@ -74,8 +74,8 @@ def to_df(path: str) -> Union[pd.DataFrame, list[pd.DataFrame]]:
     DataFrame(s)
 
     The function finds the file extension and tries to choose the
-    correct parser. If the file is an .mps, returns a list of
-    DataFrames.
+    correct parser. If the file is an .mps settings file, this returns a
+    list of DataFrames.
 
     Parameters
     ----------
@@ -84,7 +84,7 @@ def to_df(path: str) -> Union[pd.DataFrame, list[pd.DataFrame]]:
 
     Returns
     -------
-    pd.DataFrame, list[pd.DataFrame]
+    Union[pd.DataFrame, list[pd.DataFrame]]
         Data parsed from an .mpt/.mpr file or the data parsed from all
         techniques in an .mps file. Optionally also the parsed data is
         returned.
@@ -101,20 +101,23 @@ def to_df(path: str) -> Union[pd.DataFrame, list[pd.DataFrame]]:
         df = pd.DataFrame.from_dict(mpr_records)
     elif ext == '.mps':
         mps = parse_mps(path, load_data=True)
-        df = []
-        for technique in mps['techniques']:
-            if 'data' not in technique:
-                continue
-            data = technique['data']
-            # It's intentional to prefer .mpt over .mpr files here.
-            if 'mpt' in data.keys():
-                mpt_records = data['mpt']['datapoints']
+        data = mps['data']
+        dfs = []
+        if 'mpt' in data.keys():
+            # It's intentional to prefer .mpt over .mpr files here as
+            # they often contain a few more columns than the .mpr files.
+            for mpt in data['mpt']:
+                mpt_records = mpt['datapoints']
                 mpt_df = pd.DataFrame.from_dict(mpt_records)
-                df.append(mpt_df)
-            elif 'mpr' in data.keys():
-                mpr_records = data['mpr'][1]['data']['datapoints']
+                dfs.append(mpt_df)
+        elif 'mpr' in data.keys():
+            for mpr in data['mpr']:
+                mpr_records = mpr[1]['data']['datapoints']
                 mpr_df = pd.DataFrame.from_dict(mpr_records)
-                df.append(mpr_df)
+                dfs.append(mpr_df)
+        else:
+            raise ValueError("The given .mps file does not contain any data.")
+        return dfs
     else:
         raise ValueError(f"Unrecognized file extension: {ext}")
     return df
@@ -154,11 +157,14 @@ def to_xlsx(path: str, xlsx_path: str = None) -> None:
     """Extracts the data from an .mpt/.mpr file or from the techniques in
     an .mps file and writes it to an Excel file.
 
+    If the file is an .mps, this method writes the data to numbered
+    worksheets in the Excel file.
+
     Parameters
     ----------
     path
         The path to the EC-Lab file to read in.
-    xlsx_path (optional)
+    xlsx_path
         Path to the Excel file to write. Defaults to construct the
         filename from the mpt_path.
 
@@ -172,29 +178,4 @@ def to_xlsx(path: str, xlsx_path: str = None) -> None:
         # pylint: disable=abstract-class-instantiated
         with pd.ExcelWriter(xlsx_path) as writer:
             for i, df in enumerate(df):
-                df.to_excel(
-                    writer, sheet_name=f'{i+1:02d}', index=False)
-
-
-def _parse_arguments() -> argparse.Namespace:
-    """Parses the arguments if invoked from the command line."""
-    parser = argparse.ArgumentParser(
-        description=(
-            "Process the given file and write it in the specified file format"))
-    parser.add_argument("file", type=str, help="the file to read")
-    parser.add_argument("format", type=str, choices=['csv', 'xlsx'],
-        default='csv', help="type of file to write")
-    args = parser.parse_args()
-    return args
-
-
-def _run():
-    args = _parse_arguments()
-    if args.format == 'csv':
-        to_csv(args.file)
-    elif args.format == 'xlsx':
-        to_xlsx(args.file)
-
-
-if __name__ == '__main__':
-    _run()
+                df.to_excel(writer, sheet_name=f'{i+1:02d}', index=False)
