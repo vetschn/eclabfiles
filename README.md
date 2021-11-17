@@ -17,7 +17,7 @@ Parse the data as it is stored in the corresponding file. The method automatical
 >>> ecf.parse("./mpt_files/test_01_OCV.mpt")
 ```
 
-The returned data structure may look quite different depending on which file type you read in as the different filetypes also store the same data in very different ways. See [section filetypes](#Filetypes)
+The returned data structure may look quite different depending on which file type you read in as the different filetypes also store the same data in very different ways. See [section filetypes](#Filetypes).
 
 
 ### `to_df`
@@ -78,10 +78,10 @@ The `.mps` files simply relate different techniques together and store no data, 
 ```python
 {
     'header': {
-        'technique',
-        'settings',
-        'params': {},
-        'loops': {,
+        'technique', #*
+        'settings', #*
+        'params': [{}], #*
+        'loops': { #*
             'n',
             'indexes': [],
         },
@@ -135,7 +135,7 @@ The `.mps` files simply relate different techniques together and store no data, 
             'datapoints': [{}]
         },
     },
-    {
+    { #*
         'header': {
             'short_name',
             'long_name',
@@ -157,7 +157,7 @@ The `.mps` files simply relate different techniques together and store no data, 
             'averaging_points',
         },
     },
-    {
+    { #*
         'header': {
             'short_name',
             'long_name',
@@ -173,11 +173,11 @@ The `.mps` files simply relate different techniques together and store no data, 
 ]
 ```
 
-### Structure of parsed `.mpr` files
+### Structure of parsed `.mps` files
 
 ```python
 {
-    'header': {
+    'header': { #*
         'filename',
         'general_settings': [],
     },
@@ -185,16 +185,19 @@ The `.mps` files simply relate different techniques together and store no data, 
         {
             'technique',
             'params',
-            'data': {
-                'mpr': [],
-                'mpt': {},
-            },
+            
         },
     ],
+    'data': { #*
+        'mpr': [],
+        'mpt': [],
+    },
 }
 ```
 
+All the substructures marked with `#*` are not certain to be present in a given file. Also, no guarantees that the rest is *always* present.
 
+This is especially relevant for `.mpt` files, which sometimes contain only data and no header info at all.
 
 ## Techniques
 
@@ -211,7 +214,7 @@ The techniques implemented are:
 - `OCV`
 - `PEIS`
 - `WAIT`
-- `ZIR` (TODO for .mpr)
+- `ZIR` (`TODO` for .mpr)
 
 ### Notes on implementing further techniques
 
