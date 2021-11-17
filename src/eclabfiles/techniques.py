@@ -35,7 +35,6 @@ import numpy as np
 
 
 gcpl_params = [
-    'Ns',
     'set_I/C',
     'Is',
     'Is_unit',
@@ -70,6 +69,7 @@ gcpl_params = [
     'nc_cycles',
 ]
 
+
 cv_params = [
     'Ei',
     'Ei_vs',
@@ -94,6 +94,7 @@ cv_params = [
     'Ef_vs',
 ]
 
+
 ocv_params = {
     'head': [
         'tR',
@@ -107,8 +108,8 @@ ocv_params = {
     ],
 }
 
+
 ca_params = [
-    'Ns',
     'Ei',
     'Ei_vs',
     'ti',
@@ -136,8 +137,8 @@ ca_params = [
     'nc_cycles',
 ]
 
+
 cp_params = [
-    'Ns',
     'Is',
     'Is_unit',
     'Is_vs',
@@ -156,6 +157,7 @@ cp_params = [
     'nc_cycles',
 ]
 
+
 wait_params = [
     'select',
     'td',
@@ -169,6 +171,7 @@ wait_params = [
     'dI_unit',
     'dt',
 ]
+
 
 zir_params = [
     'E',
@@ -186,6 +189,7 @@ zir_params = [
     'use_results',
     'comp_mode',
 ]
+
 
 lsv_params = [
     'tR',
@@ -213,12 +217,13 @@ lsv_params = [
     'bandwidth',
 ]
 
+
 loop_params = [
     'goto_Ne',
     'nt_times',
 ]
 
-# PEIS has changing number of parameters.
+
 peis_params = {
     'head': [
         'sine_mode',
@@ -253,10 +258,9 @@ peis_params = {
     ],
 }
 
-# GEIS has changing number of parameters.
+
 geis_params = {
     'head': [
-        'Ns',
         'sine_mode',
         'Is',
         'Is_unit',
@@ -292,7 +296,7 @@ geis_params = {
     ],
 }
 
-# MB has changing number of parameters.
+
 mb_params = {
     'head': [
         'ctrl_type',
@@ -331,20 +335,40 @@ mb_params = {
     ],
 }
 
+
 # Relate the technique name with the corresponding list of parameter
 # keys. This dict only includes techniques that do not have a changing
-# number of parameters. The rest have to be handled in
-# mpt._parse_technique_params()
-technique_params = {
-    'Galvanostatic Cycling with Potential Limitation': gcpl_params,
+# number of parameters. The rest have to be handled by construct_params.
+simple_technique_params = {
     'Cyclic Voltammetry': cv_params,
-    'Chronoamperometry / Chronocoulometry': ca_params,
-    'Chronopotentiometry': cp_params,
     'Wait': wait_params,
     'IR compensation (PEIS)': zir_params,
     'Linear Sweep Voltammetry': lsv_params,
     'Loop': loop_params,
 }
+
+
+def _prepend_ns(settings: list[str], params: list) -> list[str]:
+    """Prepends the Ns parameter if present in the settings."""
+    ns_match = re.search(r'^Ns.+', '\n'.join(settings))
+    if ns_match:
+        return ['Ns'] + params
+    return params
+
+
+def construct_gcpl_params(settings: list[str]) -> list[str]:
+    """Constructs the parameter names for the GCPL technique."""
+    return _prepend_ns(settings, gcpl_params)
+
+
+def construct_ca_params(settings: list[str]) -> list[str]:
+    """Constructs the parameter names for the CA technique."""
+    return _prepend_ns(settings, ca_params)
+
+
+def construct_cp_params(settings: list[str]) -> list[str]:
+    """Constructs the parameter names for the CP technique."""
+    return _prepend_ns(settings, cp_params)
 
 
 def construct_ocv_params(settings: list[str]) -> list[str]:
@@ -359,9 +383,7 @@ def construct_ocv_params(settings: list[str]) -> list[str]:
 def construct_mb_params(settings: list[str]) -> list[str]:
     """Constructs the parameter names for the MB technique."""
     params = mb_params['head']
-    ns_match = re.search(r'Ns.+', '\n'.join(settings))
-    if ns_match:
-        params = ['Ns'] + mb_params['head']
+    params = _prepend_ns(settings, params)
     n1_match = re.search(r'N1\s+', '\n'.join(settings))
     if n1_match:
         n1 = [
@@ -405,9 +427,7 @@ def construct_mb_params(settings: list[str]) -> list[str]:
 def construct_geis_params(settings: list[str]) -> list[str]:
     """Constructs the parameter names for the GEIS technique."""
     params = geis_params['head']
-    ns_match = re.search(r'Ns.+', '\n'.join(settings))
-    if ns_match:
-        params = ['Ns'] + geis_params['head']
+    params = _prepend_ns(settings, params)
     lim_nb_match = re.search(r'lim_nb\s+(?P<val>.+)', '\n'.join(settings))
     if lim_nb_match:
         lim_nb = int(max(lim_nb_match['val'].split()))
@@ -426,9 +446,7 @@ def construct_geis_params(settings: list[str]) -> list[str]:
 def construct_peis_params(settings: list[str]) -> list[str]:
     """Constructs the parameter names for the PEIS technique."""
     params = peis_params['head']
-    ns_match = re.search(r'Ns\s.+', '\n'.join(settings))
-    if ns_match:
-        params = ['Ns'] + peis_params['head']
+    params = _prepend_ns(settings, params)
     lim_nb_match = re.search(r'lim_nb\s+(?P<val>.+)', '\n'.join(settings))
     if lim_nb_match:
         lim_nb = int(max(lim_nb_match['val'].split()))
@@ -442,6 +460,28 @@ def construct_peis_params(settings: list[str]) -> list[str]:
             ]
             params += limit
     return params + peis_params['tail']
+
+
+def construct_params(technique: str, settings: list[str]) -> list[str]:
+    """Constructs the parameter names for different techniques."""
+    if technique in simple_technique_params.keys():
+        return simple_technique_params[technique]
+    elif technique == 'Open Circuit Voltage':
+        return construct_ocv_params(settings)
+    elif technique == 'Potentio Electrochemical Impedance Spectroscopy':
+        return construct_peis_params(settings)
+    elif technique == 'Galvano Electrochemical Impedance Spectroscopy':
+        return construct_geis_params(settings)
+    elif technique == 'Modulo Bat':
+        return construct_mb_params(settings)
+    elif technique == 'Galvanostatic Cycling with Potential Limitation':
+        return construct_gcpl_params(settings)
+    elif technique == 'Chronoamperometry / Chronocoulometry':
+        return construct_ca_params(settings)
+    elif technique == 'Chronopotentiometry':
+        return construct_cp_params(settings)
+    else:
+        raise NotImplementedError(f"'{technique}' not implemented.")
 
 
 #######################################################################
@@ -484,6 +524,7 @@ gcpl_params_dtype = np.dtype([
     ('nc_cycles', '<u4'),
 ])
 
+
 cv_params_dtype = np.dtype([
     ('Ei', '<f4'),
     ('Ei_vs', '|u1'),
@@ -508,6 +549,7 @@ cv_params_dtype = np.dtype([
     ('Ef_vs', '|u1'),
 ])
 
+
 ocv_params_dtypes = {
     7: np.dtype([
         ('tR', '<f4'),
@@ -527,6 +569,7 @@ ocv_params_dtypes = {
         ('E_range_max', '<f4'),
     ]),
 }
+
 
 ca_params_dtype = np.dtype([
     ('Ei', '<f4'),
@@ -556,6 +599,7 @@ ca_params_dtype = np.dtype([
     ('nc_cycles', '<u4'),
 ])
 
+
 cp_params_dtype = np.dtype([
     ('Is', '<f4'),
     ('Is_unit', '|u1'),
@@ -575,6 +619,7 @@ cp_params_dtype = np.dtype([
     ('nc_cycles', '<u4'),
 ])
 
+
 wait_params_dtype = np.dtype([
     ('select', '|u1'),
     ('td', '<u4'),
@@ -588,6 +633,7 @@ wait_params_dtype = np.dtype([
     ('dI_unit', '|u1'),
     ('dt', '<f4'),
 ])
+
 
 peis_params_dtype = np.dtype([
     ('sine_mode', '|u1'),
@@ -644,6 +690,7 @@ peis_params_dtype = np.dtype([
     ('inc_cycle', '<u4'),
 ])
 
+
 lsv_params_dtype = np.dtype([
     ('tR', '<f4'),
     ('dER/dt', '<f4'),
@@ -669,6 +716,7 @@ lsv_params_dtype = np.dtype([
     ('I_range_init', '|u1'),
     ('bandwidth', '|u1'),
 ])
+
 
 mb_params_dtypes = {
     66: np.dtype([
@@ -804,6 +852,7 @@ mb_params_dtypes = {
     ]),
 }
 
+
 geis_params_dtype = np.dtype([
     ('sine_mode', '|u1'),
     ('Is', '<f4'),
@@ -862,10 +911,12 @@ geis_params_dtype = np.dtype([
     ('inc_cycle', '<u4'),
 ])
 
+
 zir_params_dtype = np.dtype([
     # NOTE: This module is an exception to a number of rules. See also
     # the settings module and the data module parsers.
 ])
+
 
 # Maps the technique byte to its corresponding dtype.
 technique_params_dtypes = {

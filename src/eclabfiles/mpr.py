@@ -18,12 +18,12 @@ Date:           2021-09-29
 """
 import logging
 from io import TextIOWrapper
-from typing import Any
 
 import numpy as np
-from numpy.lib import recfunctions as rfn
 
 from eclabfiles.techniques import technique_params_dtypes
+from eclabfiles.utils import read_value, read_values
+
 
 # Module header at the top of every MODULE block.
 module_header_dtype = np.dtype([
@@ -33,6 +33,7 @@ module_header_dtype = np.dtype([
     ('version', '<u4'),
     ('date', '|S8'),
 ])
+
 
 # Relates the offset in the settings DATA to the corresponding dtype.
 settings_dtypes = {
@@ -56,17 +57,19 @@ settings_dtypes = {
     # 0x19d6: ('compliance_max', '<f4'),
 }
 
+
 # Maps the flag column ID bytes to the corresponding dtype and bitmask.
-flag_column_dtypes = {
-    0x0001: ('mode', '|u1', 0x03),
-    0x0002: ('ox/red', '|b1', 0x04),
-    0x0003: ('error', '|b1', 0x08),
-    0x0015: ('control changes', '|b1', 0x10),
-    0x001F: ('Ns changes', '|b1', 0x20),
+flag_columns = {
+    0x0001: ('mode', 0x03),
+    0x0002: ('ox/red', 0x04),
+    0x0003: ('error', 0x08),
+    0x0015: ('control changes', 0x10),
+    0x001F: ('Ns changes', 0x20),
     # NOTE: I think the missing bitmask (0x40) is a stop bit. It appears
     # in the flag bytes of the very last data point.
-    0x0041: ('counter inc.', '|b1', 0x80),
+    0x0041: ('counter inc.', 0x80),
 }
+
 
 # Maps the data column ID bytes to the corresponding dtype and bitmask.
 data_column_dtypes = {
@@ -163,6 +166,7 @@ data_column_dtypes = {
     0x01f1: ('|I h7|/A', '<f4'),
 }
 
+
 # Relates the offset in the log DATA to the corresponding dtype.
 # NOTE: The log module is still sort of unclear.
 # NOTE: The safety limits are maybe at 0x200?
@@ -185,76 +189,6 @@ log_dtypes = {
     0x03cf: ('device_sn', 'pascal'),
     0x0922: ('averaging_points', '|u1'),
 }
-
-
-def _read_pascal_string(pascal_bytes: bytes) -> bytes:
-    """Parses a length-prefixed string.
-
-    Parameters
-    ----------
-    bytes
-        The bytes of the string starting at the length-prefix byte.
-
-    Returns
-    -------
-    bytes
-        The bytes that contain the string.
-
-    """
-    if len(pascal_bytes) < pascal_bytes[0] + 1:
-        raise ValueError("Insufficient number of bytes.")
-    return pascal_bytes[1:pascal_bytes[0]+1]
-
-
-def _read_value(data: bytes, offset: int, dtype) -> Any:
-    """Reads a single value from a buffer at a certain offset.
-
-    Just a handy wrapper for np.frombuffer().
-
-    Parameters
-    ----------
-    data
-        An object that exposes the buffer interface. Here always bytes.
-    offset
-        Start reading the buffer from this offset (in bytes).
-    dtype
-        Data-type to read in.
-
-    Returns
-    -------
-    Any
-        The unpacked value from the buffer.
-
-    """
-    if dtype == 'pascal':
-        # This allows the use of 'pascal' in all of the dtype maps.
-        return _read_pascal_string(data[offset:])
-    return np.frombuffer(data, offset=offset, dtype=dtype, count=1)[0]
-
-
-def _read_values(data: bytes, offset: int, dtype, count) -> Any:
-    """Reads in multiple values from a buffer starting at offset.
-
-    Just a handy wrapper for np.frombuffer() with count >= 1.
-
-    Parameters
-    ----------
-    data
-        An object that exposes the buffer interface. Here always bytes.
-    offset
-        Start reading the buffer from this offset (in bytes).
-    dtype
-        Data-type to read in.
-    count
-        Number of items to read. -1 means all data in the buffer.
-
-    Returns
-    -------
-    Any
-        The values read from the buffer as specified by the arguments.
-
-    """
-    return np.frombuffer(data, offset=offset, dtype=dtype, count=count)
 
 
 def _parse_settings(data: bytes) -> dict:
@@ -287,16 +221,17 @@ def _parse_settings(data: bytes) -> dict:
     # First parse the settings right at the top of the data block.
     technique, params_dtype = technique_params_dtypes[data[0x0000]]
     settings['technique'] = technique
-    for item in settings_dtypes.items():
-        offset, (name, dtype) = item
-        settings[name] = _read_value(data, offset, dtype)
+    for offset, (name, dtype) in settings_dtypes.items():
+        settings[name] = read_value(data, offset, dtype)
     # Then determine the technique parameters. The parameters' offset
     # changes depending on the technique present and apparently on some
     # other factor that is unclear to me.
     params_offset = None
     for offset in [0x0572, 0x1845, 0x1846]:
-        n_params = _read_value(data, offset+0x0002, '<u2')
+        n_params = read_value(data, offset+0x0002, '<u2')
         if isinstance(params_dtype, dict):
+            # The params_dtype has multiple possible lengths if it's a
+            # dictionary.
             for dtype in params_dtype.values():
                 if len(dtype) == n_params:
                     params_dtype = dtype
@@ -307,16 +242,12 @@ def _parse_settings(data: bytes) -> dict:
     if params_offset is None:
         raise NotImplementedError(
             "Unknown parameter offset or unrecognized technique dtype.")
-    ns = _read_value(data, params_offset, '<u2')
+    ns = read_value(data, params_offset, '<u2')
     logging.debug(
-        "Reading %d parameter sequences starting at an offset of %d bytes "
-        "from settings data block...", ns, params_offset)
-    params_array = _read_values(data, params_offset+0x0004, params_dtype, ns)
-    params = []
-    for n in range(ns):
-        params_n = {key: params_array[n][key] for key in params_dtype.names}
-        params.append(params_n)
-    settings['params'] = params
+        f"Reading {ns} parameter sequences starting at an offset of "
+        f"{params_offset} bytes from settings data block...")
+    settings['params'] = read_values(
+        data, params_offset+0x0004, params_dtype, ns)
     return settings
 
 
@@ -349,13 +280,12 @@ def _construct_data_dtype(column_ids: list[int]) -> tuple[np.dtype, dict]:
     column_dtypes = []
     flags = {}
     for column_id in column_ids:
-        if column_id in flag_column_dtypes:
-            name, dtype, bitmask = flag_column_dtypes[column_id]
-            flags[name] = (bitmask, dtype)
-            if ('flags', '|u1') in column_dtypes:
-                # No need to add flags column again.
-                continue
-            column_dtypes.append(('flags', '|u1'))
+        if column_id in flag_columns:
+            name, bitmask = flag_columns[column_id]
+            flags[name] = bitmask
+            if ('flags', '|u1') not in column_dtypes:
+                # Flags column only needs to be added once.
+                column_dtypes.append(('flags', '|u1'))
         elif column_id in data_column_dtypes:
             column_dtypes.append(data_column_dtypes[column_id])
         else:
@@ -380,44 +310,28 @@ def _parse_data(data: bytes, version: int) -> dict:
 
     """
     logging.debug("Parsing `.mpr` data module...")
-    n_datapoints = _read_value(data, 0x0000, '<u4')
-    n_columns = _read_value(data, 0x0004, '|u1')
-    column_ids = _read_values(data, 0x0005, '<u2', n_columns)
+    n_datapoints = read_value(data, 0x0000, '<u4')
+    n_columns = read_value(data, 0x0004, '|u1')
+    column_ids = read_values(data, 0x0005, '<u2', n_columns)
     data_dtype, flags = _construct_data_dtype(column_ids)
     # Depending on the version in the header, the data points start at a
-    # different point in the data part.
+    # slightly different point in the data part.
     if version == 2:
-        logging.debug(
-            "Reading %d data points at an offset of 0x0195 from the start of "
-            "the data module contents...", n_datapoints)
-        datapoints = _read_values(data, 0x0195, data_dtype, n_datapoints)
+        offset = 0x0195
     elif version == 3:
-        logging.debug(
-            "Reading %d data points at an offset of 0x0196 from the start of "
-            "the data module contents...", n_datapoints)
-        datapoints = _read_values(data, 0x0196, data_dtype, n_datapoints)
+        offset = 0x0196
     else:
         raise NotImplementedError(f"Unknown data module version: {version}")
+    logging.debug(
+        f"Reading {n_datapoints} data points at {offset} bytes from the start "
+        f"of the data module contents...")
+    datapoints = read_values(data, offset, data_dtype, n_datapoints)
     if flags:
         logging.debug(
             "Extracting flag values via their corresponding bitmask...")
-        flag_values = np.array(
-            datapoints['flags'], dtype=[('flags', '|u1')])
-        for item in flags.items():
-            name, (bitmask, flag_dtype) = item
-            values = np.array(
-                datapoints['flags'] & bitmask, dtype=[(name, flag_dtype)])
-            flag_values = rfn.merge_arrays(
-                seqarrays=[flag_values, values], flatten=True)
-        # The flags column has to be removed from the original record to
-        # get everything in the order I prefer (if flags column exists).
-        datapoints = rfn.rec_drop_fields(datapoints, 'flags')
-        datapoints = rfn.merge_arrays(
-            [flag_values, datapoints], flatten=True)
-    # Convert the records array into a dictionary.
-    dtype = datapoints.dtype
-    keys = rfn.get_names(dtype)
-    datapoints = [{key: row[key].item() for key in keys} for row in datapoints]
+        for datapoint in datapoints:
+            for name, bitmask in flags.items():
+                datapoint[name] = datapoint['flags'] & bitmask
     data = {
         'n_datapoints': n_datapoints,
         'n_columns': n_columns,
@@ -442,9 +356,8 @@ def _parse_log(data: bytes) -> dict:
     """
     logging.debug("Parsing `.mpr` log module...")
     log = {}
-    for item in log_dtypes.items():
-        offset, (name, dtype) = item
-        log[name] = _read_value(data, offset, dtype)
+    for offset, (name, dtype) in log_dtypes.items():
+        log[name] = read_value(data, offset, dtype)
     return log
 
 
@@ -463,12 +376,9 @@ def _parse_loop(data: bytes) -> dict:
 
     """
     logging.debug("Parsing `.mpr` loop module...")
-    n_indexes = _read_value(data, 0x0000, '<u4')
-    indexes = list(_read_values(data, 0x0004, '<u4', n_indexes))
-    loop = {
-        'n_indexes': n_indexes,
-        'indexes': indexes,
-    }
+    n_indexes = read_value(data, 0x0000, '<u4')
+    indexes = read_values(data, 0x0004, '<u4', n_indexes)
+    loop = {'n_indexes': n_indexes, 'indexes': indexes}
     return loop
 
 
@@ -490,10 +400,7 @@ def _read_modules(file: TextIOWrapper) -> list:
     modules = []
     while file.read(len(b'MODULE')) == b'MODULE':
         header_bytes = file.read(module_header_dtype.itemsize)
-        header_array = np.frombuffer(
-            header_bytes, module_header_dtype, count=1)
-        header = {
-            key: header_array[key][0] for key in module_header_dtype.names}
+        header = read_value(header_bytes, 0, module_header_dtype)
         data_bytes = file.read(header['length'])
         modules.append({'header': header, 'data': data_bytes})
     return modules
@@ -521,14 +428,16 @@ def parse_mpr(path: str) -> list[dict]:
         modules = _read_modules(mpr)
     for module in modules:
         name = module['header']['short_name']
-        if name == b'VMP Set   ':
+        if name == 'VMP Set   ':
             module['data'] = _parse_settings(module['data'])
-        elif name == b'VMP data  ':
+        elif name == 'VMP data  ':
             # The data points' offset depends on the module version.
             version = module['header']['version']
             module['data'] = _parse_data(module['data'], version)
-        elif name == b'VMP LOG   ':
+        elif name == 'VMP LOG   ':
             module['data'] = _parse_log(module['data'])
-        elif name == b'VMP loop  ':
+        elif name == 'VMP loop  ':
             module['data'] = _parse_loop(module['data'])
+        else:
+            raise NotImplementedError(f"Unknown module {name}.")
     return modules
