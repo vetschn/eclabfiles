@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Utility functions for th eclabfiles package.
+"""Utility functions for the eclabfiles package.
 
 Author:         Nicolas Vetsch (veni@empa.ch / vetschnicolas@gmail.com)
 Organisation:   EMPA Dübendorf, Materials for Energy Conversion (501)
@@ -15,7 +15,21 @@ import numpy as np
 
 
 def literal_eval(literal: str) -> Any:
-    """Evaluates a string as Python literal."""
+    """Evaluates a string as Python literal.
+
+    Parameters
+    ----------
+    literal
+        A string representation of a literal, a float (like 'nan', 'inf'
+        or '-inf'), or a non-eval-able string.
+
+    Returns
+    -------
+    Any
+        The result of ast.literal_eval(), of float conversion or the
+        stripped input string itself if it is not convertible.
+
+    """
     try:
         return ast.literal_eval(literal)
     except Exception as ex:
@@ -65,6 +79,9 @@ def read_value(
     allowing the 'pascal' keyword as an indicator for a length-prefixed
     string.
 
+    The read value is converted to a built-in datatype using
+    np.dtype.item().
+
     Parameters
     ----------
     data
@@ -79,7 +96,7 @@ def read_value(
     Returns
     -------
     Any
-        The unpacked value from the buffer.
+        The unpacked and converted value from the buffer.
 
     """
     if dtype == 'pascal':
@@ -97,6 +114,9 @@ def read_values(data: bytes, offset: int, dtype, count) -> list:
     """Reads in multiple values from a buffer starting at offset.
 
     Just a handy wrapper for np.frombuffer() with count >= 1.
+
+    The read values are converted to a list of built-in datatypes using
+    np.ndarray.tolist().
 
     Parameters
     ----------
