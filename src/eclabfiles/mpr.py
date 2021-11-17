@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Read BioLogic's EC-Lab binary modular files into dicts.
+"""Read BioLogic's EC-Lab binary modular files into lists of dicts.
 
-This code is an adaptation of the `galvani` module by Chris Kerr
+This code is partly an adaptation of the `galvani` module by Chris Kerr
 (https://github.com/echemdata/galvani) and builds on the work done by
 the previous civilian service member working on the project, Jonas
 Krieger.
-
-While there where mostly only `modules` and the `module header` before,
-now pretty much the entire file structure is there for a few relevant
-techniques.
 
 Author:         Nicolas Vetsch (veni@empa.ch / vetschnicolas@gmail.com)
 Organisation:   EMPA Dübendorf, Materials for Energy Conversion (501)
@@ -25,7 +21,7 @@ from eclabfiles.techniques import technique_params_dtypes
 from eclabfiles.utils import read_value, read_values
 
 
-# Module header at the top of every MODULE block.
+# Module header at the top of every VMP MODULE block.
 module_header_dtype = np.dtype([
     ('short_name', '|S10'),
     ('long_name', '|S25'),
@@ -58,20 +54,21 @@ settings_dtypes = {
 }
 
 
-# Maps the flag column ID bytes to the corresponding dtype and bitmask.
+# Maps the flag column ID bytes to the corresponding name, bitmask and
+# bitshift.
 flag_columns = {
-    0x0001: ('mode', 0x03),
-    0x0002: ('ox/red', 0x04),
-    0x0003: ('error', 0x08),
-    0x0015: ('control changes', 0x10),
-    0x001F: ('Ns changes', 0x20),
+    0x0001: ('mode', 0x03, 0),
+    0x0002: ('ox/red', 0x04, 2),
+    0x0003: ('error', 0x08, 3),
+    0x0015: ('control changes', 0x10, 4),
+    0x001F: ('Ns changes', 0x20, 5),
     # NOTE: I think the missing bitmask (0x40) is a stop bit. It appears
     # in the flag bytes of the very last data point.
-    0x0041: ('counter inc.', 0x80),
+    0x0041: ('counter inc.', 0x80, 7),
 }
 
 
-# Maps the data column ID bytes to the corresponding dtype and bitmask.
+# Maps the data column ID bytes to the corresponding dtype.
 data_column_dtypes = {
     0x0004: ('time/s', '<f8'),
     0x0005: ('control/V/mA', '<f4'),
@@ -168,11 +165,10 @@ data_column_dtypes = {
 
 
 # Relates the offset in the log DATA to the corresponding dtype.
-# NOTE: The log module is still sort of unclear.
 # NOTE: The safety limits are maybe at 0x200?
 # NOTE: The log also seems to contain the settings again. These are left
 # away for now.
-# NOTE: Looking at the .mpl files, the log module appears to consist of
+# NOTE: Looking at .mpl files, the log module appears to consist of
 # multiple 'modify on' sections that start with an OLE timestamp.
 log_dtypes = {
     0x0009: ('channel_number', '<u2'),
@@ -192,7 +188,7 @@ log_dtypes = {
 
 
 def _parse_settings(data: bytes) -> dict:
-    """Parses through the contents of settings modules.
+    """Parses the contents of settings modules into a dictionary.
 
     Note
     ----
@@ -203,12 +199,12 @@ def _parse_settings(data: bytes) -> dict:
 
     The offsets from the start of the data part are hardcoded in as they
     do not seem to change. (Maybe watch out for very long comments that
-    span over the entire padding.)
+    could span over the entire padding.)
 
     Parameters
     ----------
     data
-        The module data to parse through.
+        The module data bytes to parse through.
 
     Returns
     -------
@@ -281,8 +277,8 @@ def _construct_data_dtype(column_ids: list[int]) -> tuple[np.dtype, dict]:
     flags = {}
     for column_id in column_ids:
         if column_id in flag_columns:
-            name, bitmask = flag_columns[column_id]
-            flags[name] = bitmask
+            name, bitmask, shift = flag_columns[column_id]
+            flags[name] = (bitmask, shift)
             if ('flags', '|u1') not in column_dtypes:
                 # Flags column only needs to be added once.
                 column_dtypes.append(('flags', '|u1'))
@@ -302,6 +298,8 @@ def _parse_data(data: bytes, version: int) -> dict:
     ----------
     data
         The module data to parse through.
+    version
+        The version of the data module.
 
     Returns
     -------
@@ -330,8 +328,8 @@ def _parse_data(data: bytes, version: int) -> dict:
         logging.debug(
             "Extracting flag values via their corresponding bitmask...")
         for datapoint in datapoints:
-            for name, bitmask in flags.items():
-                datapoint[name] = datapoint['flags'] & bitmask
+            for name, (bitmask, shift) in flags.items():
+                datapoint[name] = (datapoint['flags'] & bitmask) >> shift
     data = {
         'n_datapoints': n_datapoints,
         'n_columns': n_columns,
