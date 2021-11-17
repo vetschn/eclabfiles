@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 """Some definitions for all the data structures necessary to parse.
 
-The technique parameters in ASCII files (MPT/MPS), as well as the Numpy
-dtypes for the techniques in the MPR, can be found here.
+The technique parameters in ASCII files (.mpt/.mps), as well as the
+Numpy dtypes for the techniques in the .mpr, can be found here.
 
 Implemented techniques:
     - CA
@@ -32,81 +32,6 @@ import numpy as np
 ########################################################################
 ################## Parameter names as in ASCII files. ##################
 ########################################################################
-
-
-gcpl_params = [
-    'set_I/C',
-    'Is',
-    'Is_unit',
-    'Is_vs',
-    'N',
-    'I_sign',
-    't1',
-    'I_range',
-    'bandwidth',
-    'dE1',
-    'dt1',
-    'EM',
-    'tM',
-    'Im',
-    'Im_unit',
-    'dI/dt',
-    'dI/dt_unit',
-    'E_range_min',
-    'E_range_max',
-    'dq',
-    'dq_unit',
-    'dtq',
-    'dQM',
-    'dQM_unit',
-    'dxM',
-    'tR',
-    'dER/dt',
-    'dER',
-    'dtR',
-    'EL',
-    'goto_Ns',
-    'nc_cycles',
-]
-
-
-cv_params = [
-    'Ei',
-    'Ei_vs',
-    'dE/dt',
-    'dE/dt_unit',
-    'E1',
-    'E1_vs',
-    'step_percent',
-    'N',
-    'E_range_min',
-    'E_range_max',
-    'I_range',
-    'I_range_min',
-    'I_range_max',
-    'I_range_init',
-    'bandwidth',
-    'E2',
-    'E2_vs',
-    'nc_cycles',
-    'reverse_scan',
-    'Ef',
-    'Ef_vs',
-]
-
-
-ocv_params = {
-    'head': [
-        'tR',
-        'dER/dt',
-    ],
-    'tail': [
-        'dER',
-        'dtR',
-        'E_range_min',
-        'E_range_max',
-    ],
-}
 
 
 ca_params = [
@@ -158,54 +83,13 @@ cp_params = [
 ]
 
 
-wait_params = [
-    'select',
-    'td',
-    'from',
-    'tech_num',
-    'ole_date',
-    'ole_time',
-    'record',
-    'dE',
-    'dI',
-    'dI_unit',
-    'dt',
-]
-
-
-zir_params = [
-    'E',
-    'E_vs',
-    'f',
-    'f_unit',
-    'Va',
-    'pw',
-    'Na',
-    'E_range_min',
-    'E_range_max',
-    'I_range',
-    'bandwidth',
-    'comp_level',
-    'use_results',
-    'comp_mode',
-]
-
-
-lsv_params = [
-    'tR',
-    'dER/dt',
-    'dER',
-    'dtR',
-    'dE/dt',
-    'dE/dt_unit',
+cv_params = [
     'Ei',
     'Ei_vs',
-    'EL',
-    'EL_vs',
-    'record',
-    'dI',
-    'dI_unit',
-    'tI',
+    'dE/dt',
+    'dE/dt_unit',
+    'E1',
+    'E1_vs',
     'step_percent',
     'N',
     'E_range_min',
@@ -215,48 +99,49 @@ lsv_params = [
     'I_range_max',
     'I_range_init',
     'bandwidth',
+    'E2',
+    'E2_vs',
+    'nc_cycles',
+    'reverse_scan',
+    'Ef',
+    'Ef_vs',
 ]
 
 
-loop_params = [
-    'goto_Ne',
-    'nt_times',
+gcpl_params = [
+    'set_I/C',
+    'Is',
+    'Is_unit',
+    'Is_vs',
+    'N',
+    'I_sign',
+    't1',
+    'I_range',
+    'bandwidth',
+    'dE1',
+    'dt1',
+    'EM',
+    'tM',
+    'Im',
+    'Im_unit',
+    'dI/dt',
+    'dI/dt_unit',
+    'E_range_min',
+    'E_range_max',
+    'dq',
+    'dq_unit',
+    'dtq',
+    'dQM',
+    'dQM_unit',
+    'dxM',
+    'tR',
+    'dER/dt',
+    'dER',
+    'dtR',
+    'EL',
+    'goto_Ns',
+    'nc_cycles',
 ]
-
-
-peis_params = {
-    'head': [
-        'sine_mode',
-        'E',
-        'E_vs',
-        'tE',
-        'record',
-        'dI',
-        'dI_unit',
-        'dt',
-        'fi',
-        'fi_unit',
-        'ff',
-        'ff_unit',
-        'Nd',
-        'points',
-        'spacing',
-        'Va',
-        'pw',
-        'Na',
-        'corr',
-    ],
-    'tail': [
-        'E_range_min',
-        'E_range_max',
-        'I_range',
-        'bandwidth',
-        'nc_cycles',
-        'goto_Ns',
-        'nr_cycles',
-        'inc_cycle',
-    ],
-}
 
 
 geis_params = {
@@ -295,6 +180,39 @@ geis_params = {
         'inc_cycle',
     ],
 }
+
+
+loop_params = [
+    'goto_Ne',
+    'nt_times',
+]
+
+
+lsv_params = [
+    'tR',
+    'dER/dt',
+    'dER',
+    'dtR',
+    'dE/dt',
+    'dE/dt_unit',
+    'Ei',
+    'Ei_vs',
+    'EL',
+    'EL_vs',
+    'record',
+    'dI',
+    'dI_unit',
+    'tI',
+    'step_percent',
+    'N',
+    'E_range_min',
+    'E_range_max',
+    'I_range',
+    'I_range_min',
+    'I_range_max',
+    'I_range_init',
+    'bandwidth',
+]
 
 
 mb_params = {
@@ -336,99 +254,143 @@ mb_params = {
 }
 
 
+ocv_params = {
+    'head': [
+        'tR',
+        'dER/dt',
+    ],
+    'tail': [
+        'dER',
+        'dtR',
+        'E_range_min',
+        'E_range_max',
+    ],
+}
+
+
+peis_params = {
+    'head': [
+        'sine_mode',
+        'E',
+        'E_vs',
+        'tE',
+        'record',
+        'dI',
+        'dI_unit',
+        'dt',
+        'fi',
+        'fi_unit',
+        'ff',
+        'ff_unit',
+        'Nd',
+        'points',
+        'spacing',
+        'Va',
+        'pw',
+        'Na',
+        'corr',
+    ],
+    'tail': [
+        'E_range_min',
+        'E_range_max',
+        'I_range',
+        'bandwidth',
+        'nc_cycles',
+        'goto_Ns',
+        'nr_cycles',
+        'inc_cycle',
+    ],
+}
+
+
+wait_params = [
+    'select',
+    'td',
+    'from',
+    'tech_num',
+    'ole_date',
+    'ole_time',
+    'record',
+    'dE',
+    'dI',
+    'dI_unit',
+    'dt',
+]
+
+
+zir_params = [
+    'E',
+    'E_vs',
+    'f',
+    'f_unit',
+    'Va',
+    'pw',
+    'Na',
+    'E_range_min',
+    'E_range_max',
+    'I_range',
+    'bandwidth',
+    'comp_level',
+    'use_results',
+    'comp_mode',
+]
+
+
 # Relate the technique name with the corresponding list of parameter
 # keys. This dict only includes techniques that do not have a changing
 # number of parameters. The rest have to be handled by construct_params.
 simple_technique_params = {
     'Cyclic Voltammetry': cv_params,
+    'Loop': loop_params,
+    'Linear Sweep Voltammetry': lsv_params,
     'Wait': wait_params,
     'IR compensation (PEIS)': zir_params,
-    'Linear Sweep Voltammetry': lsv_params,
-    'Loop': loop_params,
 }
 
 
 def _prepend_ns(settings: list[str], params: list) -> list[str]:
-    """Prepends the Ns parameter if present in the settings."""
+    """Prepends the 'Ns' parameter to the parameters if present.
+
+    Parameters
+    ----------
+    settings
+        The list of settings from the start of an .mpt or .mps file.
+    params
+        A list containing the first part of the technique parameter
+        names. The Ns is prepended to this if present in the settings.
+
+    Returns
+    -------
+    list[str]
+        The 'Ns'-prepended parameters or the unchanged parameters.
+
+    """
     ns_match = re.search(r'^Ns.+', '\n'.join(settings))
     if ns_match:
         return ['Ns'] + params
     return params
 
 
-def construct_gcpl_params(settings: list[str]) -> list[str]:
-    """Constructs the parameter names for the GCPL technique."""
-    return _prepend_ns(settings, gcpl_params)
-
-
-def construct_ca_params(settings: list[str]) -> list[str]:
+def _construct_ca_params(settings: list[str]) -> list[str]:
     """Constructs the parameter names for the CA technique."""
     return _prepend_ns(settings, ca_params)
 
 
-def construct_cp_params(settings: list[str]) -> list[str]:
+def _construct_cp_params(settings: list[str]) -> list[str]:
     """Constructs the parameter names for the CP technique."""
     return _prepend_ns(settings, cp_params)
 
 
-def construct_ocv_params(settings: list[str]) -> list[str]:
-    """Constructs the parameter names for the OCV technique."""
-    params = ocv_params['head']
-    record_match = re.search(r'record.+', '\n'.join(settings))
-    if record_match:
-        params += ['record']
-    return params + ocv_params['tail']
+def _construct_gcpl_params(settings: list[str]) -> list[str]:
+    """Constructs the parameter names for the GCPL technique."""
+    return _prepend_ns(settings, gcpl_params)
 
 
-def construct_mb_params(settings: list[str]) -> list[str]:
-    """Constructs the parameter names for the MB technique."""
-    params = mb_params['head']
-    params = _prepend_ns(settings, params)
-    n1_match = re.search(r'N1\s+', '\n'.join(settings))
-    if n1_match:
-        n1 = [
-            'charge/discharge_1',
-            'apply_I/C_1',
-            'N1',
-            'ctrl4_val_unit',
-            'ctrl4_val_vs',
-        ]
-        params += n1
-    params += mb_params['mid']
-    lim_nb_match = re.search(r'lim_nb\s+(?P<val>.+)', '\n'.join(settings))
-    if lim_nb_match:
-        lim_nb = int(max(lim_nb_match['val'].split()))
-        params.append('lim_nb')
-        for i, __ in enumerate(range(lim_nb), 1):
-            lim = [
-                f'lim{i}_type',
-                f'lim{i}_comp',
-                f'lim{i}_Q',
-                f'lim{i}_value',
-                f'lim{i}_value_unit',
-                f'lim{i}_action',
-                f'lim{i}_seq',
-            ]
-            params += lim
-    rec_nb_match = re.search(r'rec_nb\s+(?P<val>.+)', '\n'.join(settings))
-    if rec_nb_match:
-        rec_nb = int(max(rec_nb_match['val'].split()))
-        params.append('rec_nb')
-        for i, __ in enumerate(range(rec_nb), 1):
-            rec = [
-                f'rec{i}_type',
-                f'rec{i}_value',
-                f'rec{i}_value_unit',
-            ]
-            params += rec
-    return params + mb_params['tail']
-
-
-def construct_geis_params(settings: list[str]) -> list[str]:
+def _construct_geis_params(settings: list[str]) -> list[str]:
     """Constructs the parameter names for the GEIS technique."""
     params = geis_params['head']
     params = _prepend_ns(settings, params)
-    lim_nb_match = re.search(r'lim_nb\s+(?P<val>.+)', '\n'.join(settings))
+    lim_nb_match = re.search(r'^lim_nb\s+(?P<val>.+)', '\n'.join(settings))
     if lim_nb_match:
         lim_nb = int(max(lim_nb_match['val'].split()))
         params.append('lim_nb')
@@ -443,11 +405,64 @@ def construct_geis_params(settings: list[str]) -> list[str]:
     return params + geis_params['tail']
 
 
-def construct_peis_params(settings: list[str]) -> list[str]:
+def _construct_mb_params(settings: list[str]) -> list[str]:
+    """Constructs the parameter names for the MB technique."""
+    params = mb_params['head']
+    params = _prepend_ns(settings, params)
+    n1_match = re.search(r'^N1\s+', '\n'.join(settings))
+    if n1_match:
+        n1 = [
+            'charge/discharge_1',
+            'apply_I/C_1',
+            'N1',
+            'ctrl4_val_unit',
+            'ctrl4_val_vs',
+        ]
+        params += n1
+    params += mb_params['mid']
+    lim_nb_match = re.search(r'^lim_nb\s+(?P<val>.+)', '\n'.join(settings))
+    if lim_nb_match:
+        lim_nb = int(max(lim_nb_match['val'].split()))
+        params.append('lim_nb')
+        for i, __ in enumerate(range(lim_nb), 1):
+            lim = [
+                f'lim{i}_type',
+                f'lim{i}_comp',
+                f'lim{i}_Q',
+                f'lim{i}_value',
+                f'lim{i}_value_unit',
+                f'lim{i}_action',
+                f'lim{i}_seq',
+            ]
+            params += lim
+    rec_nb_match = re.search(r'^rec_nb\s+(?P<val>.+)', '\n'.join(settings))
+    if rec_nb_match:
+        rec_nb = int(max(rec_nb_match['val'].split()))
+        params.append('rec_nb')
+        for i, __ in enumerate(range(rec_nb), 1):
+            rec = [
+                f'rec{i}_type',
+                f'rec{i}_value',
+                f'rec{i}_value_unit',
+            ]
+            params += rec
+    return params + mb_params['tail']
+
+
+def _construct_ocv_params(settings: list[str]) -> list[str]:
+    """Constructs the parameter names for the OCV technique."""
+    params = ocv_params['head']
+    record_match = re.search(r'^record.+', '\n'.join(settings))
+    if record_match:
+        params += ['record']
+    return params + ocv_params['tail']
+
+
+def _construct_peis_params(settings: list[str]) -> list[str]:
     """Constructs the parameter names for the PEIS technique."""
     params = peis_params['head']
     params = _prepend_ns(settings, params)
-    lim_nb_match = re.search(r'lim_nb\s+(?P<val>.+)', '\n'.join(settings))
+    lim_nb_match = re.search(r'^lim_nb\s+(?P<val>.+)', '\n'.join(settings))
     if lim_nb_match:
         lim_nb = int(max(lim_nb_match['val'].split()))
         params.append('lim_nb')
@@ -463,23 +478,38 @@ def construct_peis_params(settings: list[str]) -> list[str]:
 
 
 def construct_params(technique: str, settings: list[str]) -> list[str]:
-    """Constructs the parameter names for different techniques."""
+    """Constructs the parameter names for different techniques.
+
+    Parameters
+    ----------
+    technique
+        The name of the technique.
+    settings
+        The list of settings from the start of an .mpt or .mps file.
+
+    Returns
+    -------
+    list[str]
+        The full list of technique parameter names depending on what is
+        present in the file.
+
+    """
     if technique in simple_technique_params.keys():
         return simple_technique_params[technique]
-    elif technique == 'Open Circuit Voltage':
-        return construct_ocv_params(settings)
-    elif technique == 'Potentio Electrochemical Impedance Spectroscopy':
-        return construct_peis_params(settings)
-    elif technique == 'Galvano Electrochemical Impedance Spectroscopy':
-        return construct_geis_params(settings)
-    elif technique == 'Modulo Bat':
-        return construct_mb_params(settings)
-    elif technique == 'Galvanostatic Cycling with Potential Limitation':
-        return construct_gcpl_params(settings)
     elif technique == 'Chronoamperometry / Chronocoulometry':
-        return construct_ca_params(settings)
+        return _construct_ca_params(settings)
     elif technique == 'Chronopotentiometry':
-        return construct_cp_params(settings)
+        return _construct_cp_params(settings)
+    elif technique == 'Galvanostatic Cycling with Potential Limitation':
+        return _construct_gcpl_params(settings)
+    elif technique == 'Galvano Electrochemical Impedance Spectroscopy':
+        return _construct_geis_params(settings)
+    elif technique == 'Modulo Bat':
+        return _construct_mb_params(settings)
+    elif technique == 'Open Circuit Voltage':
+        return _construct_ocv_params(settings)
+    elif technique == 'Potentio Electrochemical Impedance Spectroscopy':
+        return _construct_peis_params(settings)
     else:
         raise NotImplementedError(f"'{technique}' not implemented.")
 
@@ -487,88 +517,6 @@ def construct_params(technique: str, settings: list[str]) -> list[str]:
 #######################################################################
 ################# Parameter dtypes as in binary data. #################
 #######################################################################
-
-
-gcpl_params_dtype = np.dtype([
-    ('set_I/C', '|u1'),
-    ('Is', '<f4'),
-    ('Is_unit', '|u1'),
-    ('Is_vs', '|u1'),
-    ('N', 'f4'),
-    ('I_sign', '|u1'),
-    ('t1', '<f4'),
-    ('I_range', '|u1'),
-    ('bandwidth', '|u1'),
-    ('dE1', '<f4'),
-    ('dt1', '<f4'),
-    ('EM', '<f4'),
-    ('tM', '<f4'),
-    ('Im', '<f4'),
-    ('Im_unit', '|u1'),
-    ('dI/dt', '<f4'),
-    ('dI/dt_unit', '|u1'),
-    ('E_range_min', '<f4'),
-    ('E_range_max', '<f4'),
-    ('dq', '<f4'),
-    ('dq_unit', '|u1'),
-    ('dtq', '<f4'),
-    ('dQM', '<f4'),
-    ('dQM_unit', '|u1'),
-    ('dxM', '<f4'),
-    ('tR', '<f4'),
-    ('dER/dt', '<f4'),
-    ('dER', '<f4'),
-    ('dtR', '<f4'),
-    ('EL', '<f4'),
-    ('goto_Ns', '<u4'),
-    ('nc_cycles', '<u4'),
-])
-
-
-cv_params_dtype = np.dtype([
-    ('Ei', '<f4'),
-    ('Ei_vs', '|u1'),
-    ('dE/dt', '<f4'),
-    ('dE/dt_unit', '|u1'),
-    ('E1', '<f4'),
-    ('E1_vs', '|u1'),
-    ('step_percent', '|u1'),
-    ('N', '<u4'),
-    ('E_range_min', '<f4'),
-    ('E_range_max', '<f4'),
-    ('I_range', '|u1'),
-    ('I_range_min', '|u1'),
-    ('I_range_max', '|u1'),
-    ('I_range_init', '|u1'),
-    ('bandwidth', 'u1'),
-    ('E2', '<f4'),
-    ('E2_vs', '|u1'),
-    ('nc_cycles', '<u4'),
-    ('reverse_scan', '|u1'),
-    ('Ef', '<f4'),
-    ('Ef_vs', '|u1'),
-])
-
-
-ocv_params_dtypes = {
-    7: np.dtype([
-        ('tR', '<f4'),
-        ('dER/dt', '<f4'),
-        ('record', '|u1'),
-        ('dER', '<f4'),
-        ('dtR', '<f4'),
-        ('E_range_min', '<f4'),
-        ('E_range_max', '<f4'),
-    ]),
-    6: np.dtype([
-        ('tR', '<f4'),
-        ('dER/dt', '<f4'),
-        ('dER', '<f4'),
-        ('dtR', '<f4'),
-        ('E_range_min', '<f4'),
-        ('E_range_max', '<f4'),
-    ]),
-}
 
 
 ca_params_dtype = np.dtype([
@@ -620,29 +568,75 @@ cp_params_dtype = np.dtype([
 ])
 
 
-wait_params_dtype = np.dtype([
-    ('select', '|u1'),
-    ('td', '<u4'),
-    ('from', '|u1'),
-    ('tech_num', '|u1'),
-    ('ole_date', '<f4'),  # Why the hell would they split this?!
-    ('ole_time', '<f4'),
-    ('record', '|u1'),
-    ('dE', '<f4'),
-    ('dI', '<f4'),
-    ('dI_unit', '|u1'),
-    ('dt', '<f4'),
+cv_params_dtype = np.dtype([
+    ('Ei', '<f4'),
+    ('Ei_vs', '|u1'),
+    ('dE/dt', '<f4'),
+    ('dE/dt_unit', '|u1'),
+    ('E1', '<f4'),
+    ('E1_vs', '|u1'),
+    ('step_percent', '|u1'),
+    ('N', '<u4'),
+    ('E_range_min', '<f4'),
+    ('E_range_max', '<f4'),
+    ('I_range', '|u1'),
+    ('I_range_min', '|u1'),
+    ('I_range_max', '|u1'),
+    ('I_range_init', '|u1'),
+    ('bandwidth', 'u1'),
+    ('E2', '<f4'),
+    ('E2_vs', '|u1'),
+    ('nc_cycles', '<u4'),
+    ('reverse_scan', '|u1'),
+    ('Ef', '<f4'),
+    ('Ef_vs', '|u1'),
 ])
 
 
-peis_params_dtype = np.dtype([
+gcpl_params_dtype = np.dtype([
+    ('set_I/C', '|u1'),
+    ('Is', '<f4'),
+    ('Is_unit', '|u1'),
+    ('Is_vs', '|u1'),
+    ('N', 'f4'),
+    ('I_sign', '|u1'),
+    ('t1', '<f4'),
+    ('I_range', '|u1'),
+    ('bandwidth', '|u1'),
+    ('dE1', '<f4'),
+    ('dt1', '<f4'),
+    ('EM', '<f4'),
+    ('tM', '<f4'),
+    ('Im', '<f4'),
+    ('Im_unit', '|u1'),
+    ('dI/dt', '<f4'),
+    ('dI/dt_unit', '|u1'),
+    ('E_range_min', '<f4'),
+    ('E_range_max', '<f4'),
+    ('dq', '<f4'),
+    ('dq_unit', '|u1'),
+    ('dtq', '<f4'),
+    ('dQM', '<f4'),
+    ('dQM_unit', '|u1'),
+    ('dxM', '<f4'),
+    ('tR', '<f4'),
+    ('dER/dt', '<f4'),
+    ('dER', '<f4'),
+    ('dtR', '<f4'),
+    ('EL', '<f4'),
+    ('goto_Ns', '<u4'),
+    ('nc_cycles', '<u4'),
+])
+
+
+geis_params_dtype = np.dtype([
     ('sine_mode', '|u1'),
-    ('E', '<f4'),
-    ('E_vs', '|u1'),
-    ('tE', '<f4'),
+    ('Is', '<f4'),
+    ('Is_unit', '|u1'),
+    ('Is_vs', '|u1'),
+    ('tIs', '<f4'),
     ('record', '|u1'),
-    ('dI', '<f4'),
-    ('dI_unit', '|u1'),
+    ('dE', '<f4'),
     ('dt', '<f4'),
     ('fi', '<f4'),
     ('fi_unit', '|u1'),
@@ -651,7 +645,10 @@ peis_params_dtype = np.dtype([
     ('Nd', '<u4'),
     ('points', '|u1'),
     ('spacing', '|u1'),
-    ('Va', '<f4'),
+    ('Ia/Va', '|u1'),
+    ('Ia', '<f4'),
+    ('Ia_unit', '|u1'),
+    ('va_pourcent', '<f4'),
     ('pw', '<f4'),
     ('Na', '<u4'),
     ('corr', '|u1'),
@@ -853,14 +850,35 @@ mb_params_dtypes = {
 }
 
 
-geis_params_dtype = np.dtype([
+ocv_params_dtypes = {
+    7: np.dtype([
+        ('tR', '<f4'),
+        ('dER/dt', '<f4'),
+        ('record', '|u1'),
+        ('dER', '<f4'),
+        ('dtR', '<f4'),
+        ('E_range_min', '<f4'),
+        ('E_range_max', '<f4'),
+    ]),
+    6: np.dtype([
+        ('tR', '<f4'),
+        ('dER/dt', '<f4'),
+        ('dER', '<f4'),
+        ('dtR', '<f4'),
+        ('E_range_min', '<f4'),
+        ('E_range_max', '<f4'),
+    ]),
+}
+
+
+peis_params_dtype = np.dtype([
     ('sine_mode', '|u1'),
-    ('Is', '<f4'),
-    ('Is_unit', '|u1'),
-    ('Is_vs', '|u1'),
-    ('tIs', '<f4'),
+    ('E', '<f4'),
+    ('E_vs', '|u1'),
+    ('tE', '<f4'),
     ('record', '|u1'),
-    ('dE', '<f4'),
+    ('dI', '<f4'),
+    ('dI_unit', '|u1'),
     ('dt', '<f4'),
     ('fi', '<f4'),
     ('fi_unit', '|u1'),
@@ -869,10 +887,7 @@ geis_params_dtype = np.dtype([
     ('Nd', '<u4'),
     ('points', '|u1'),
     ('spacing', '|u1'),
-    ('Ia/Va', '|u1'),
-    ('Ia', '<f4'),
-    ('Ia_unit', '|u1'),
-    ('va_pourcent', '<f4'),
+    ('Va', '<f4'),
     ('pw', '<f4'),
     ('Na', '<u4'),
     ('corr', '|u1'),
@@ -909,6 +924,21 @@ geis_params_dtype = np.dtype([
     ('goto_Ns', '<u4'),
     ('nr_cycles', '<u4'),
     ('inc_cycle', '<u4'),
+])
+
+
+wait_params_dtype = np.dtype([
+    ('select', '|u1'),
+    ('td', '<u4'),
+    ('from', '|u1'),
+    ('tech_num', '|u1'),
+    ('ole_date', '<f4'),  # Why the hell would they split this?!
+    ('ole_time', '<f4'),
+    ('record', '|u1'),
+    ('dE', '<f4'),
+    ('dI', '<f4'),
+    ('dI_unit', '|u1'),
+    ('dt', '<f4'),
 ])
 
 
