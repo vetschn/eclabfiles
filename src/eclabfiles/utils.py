@@ -42,10 +42,7 @@ def literal_eval(literal: str) -> Any:
     return literal.strip()
 
 
-def read_pascal_string(
-    pascal_bytes: bytes,
-    encoding: str = 'windows-1252'
-) -> str:
+def read_pascal_string(pascal_bytes: bytes, encoding: str = "windows-1252") -> str:
     """Parses a length-prefixed string given some encoding.
 
     Parameters
@@ -63,15 +60,12 @@ def read_pascal_string(
     """
     if len(pascal_bytes) < pascal_bytes[0] + 1:
         raise ValueError("Insufficient number of bytes.")
-    string_bytes = pascal_bytes[1:pascal_bytes[0]+1]
+    string_bytes = pascal_bytes[1 : pascal_bytes[0] + 1]
     return string_bytes.decode(encoding)
 
 
 def read_value(
-    data: bytes,
-    offset: int,
-    dtype: np.dtype,
-    encoding: str = 'windows-1252'
+    data: bytes, offset: int, dtype: np.dtype, encoding: str = "windows-1252"
 ) -> Any:
     """Reads a single value from a buffer at a certain offset.
 
@@ -99,7 +93,7 @@ def read_value(
         The unpacked and converted value from the buffer.
 
     """
-    if dtype == 'pascal':
+    if dtype == "pascal":
         # Allow the use of 'pascal' in all of the dtype maps.
         return read_pascal_string(data[offset:])
     value = np.frombuffer(data, offset=offset, dtype=dtype, count=1)

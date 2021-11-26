@@ -36,7 +36,7 @@ def _construct_path(other_path: str, ext: str) -> str:
     """
     head, tail = os.path.split(other_path)
     tail, __ = os.path.splitext(tail)
-    this_path = os.path.join(head, tail+ext)
+    this_path = os.path.join(head, tail + ext)
     return this_path
 
 
@@ -58,11 +58,11 @@ def parse(path: str) -> Union[list, dict]:
 
     """
     __, ext = os.path.splitext(path)
-    if ext == '.mpt':
+    if ext == ".mpt":
         parsed = parse_mpt(path)
-    elif ext == '.mpr':
+    elif ext == ".mpr":
         parsed = parse_mpr(path)
-    elif ext == '.mps':
+    elif ext == ".mps":
         parsed = parse_mps(path)
     else:
         raise ValueError(f"Unrecognized file extension: {ext}")
@@ -91,28 +91,28 @@ def to_df(path: str) -> Union[pd.DataFrame, list[pd.DataFrame]]:
 
     """
     __, ext = os.path.splitext(path)
-    if ext == '.mpt':
+    if ext == ".mpt":
         mpt = parse_mpt(path)
-        mpt_records = mpt['datapoints']
+        mpt_records = mpt["datapoints"]
         df = pd.DataFrame.from_dict(mpt_records)
-    elif ext == '.mpr':
+    elif ext == ".mpr":
         mpr = parse_mpr(path)
-        mpr_records = mpr[1]['data']['datapoints']
+        mpr_records = mpr[1]["data"]["datapoints"]
         df = pd.DataFrame.from_dict(mpr_records)
-    elif ext == '.mps':
+    elif ext == ".mps":
         mps = parse_mps(path, load_data=True)
-        data = mps['data']
+        data = mps["data"]
         dfs = []
-        if 'mpt' in data.keys():
+        if "mpt" in data.keys():
             # It's intentional to prefer .mpt over .mpr files here as
             # they often contain a few more columns than the .mpr files.
-            for mpt in data['mpt']:
-                mpt_records = mpt['datapoints']
+            for mpt in data["mpt"]:
+                mpt_records = mpt["datapoints"]
                 mpt_df = pd.DataFrame.from_dict(mpt_records)
                 dfs.append(mpt_df)
-        elif 'mpr' in data.keys():
-            for mpr in data['mpr']:
-                mpr_records = mpr[1]['data']['datapoints']
+        elif "mpr" in data.keys():
+            for mpr in data["mpr"]:
+                mpr_records = mpr[1]["data"]["datapoints"]
                 mpr_df = pd.DataFrame.from_dict(mpr_records)
                 dfs.append(mpr_df)
         else:
@@ -140,17 +140,21 @@ def to_csv(path: str, csv_path: str = None) -> None:
     df = to_df(path)
     if isinstance(df, pd.DataFrame):
         if csv_path is None:
-            csv_path = _construct_path(path, '.csv')
-        df.to_csv(csv_path, float_format='%.15f', index=False)
+            csv_path = _construct_path(path, ".csv")
+        df.to_csv(csv_path, float_format="%.15f", index=False)
     elif isinstance(df, list):
         for i, df in enumerate(df):
             if csv_path:
                 df.to_csv(
-                    _construct_path(csv_path, f'_{i+1:02d}.csv'),
-                    float_format='%.15f', index=False)
+                    _construct_path(csv_path, f"_{i+1:02d}.csv"),
+                    float_format="%.15f",
+                    index=False,
+                )
             df.to_csv(
-                _construct_path(path, f'_{i+1:02d}.csv'),
-                float_format='%.15f', index=False)
+                _construct_path(path, f"_{i+1:02d}.csv"),
+                float_format="%.15f",
+                index=False,
+            )
 
 
 def to_xlsx(path: str, xlsx_path: str = None) -> None:
@@ -171,11 +175,11 @@ def to_xlsx(path: str, xlsx_path: str = None) -> None:
     """
     df = to_df(path)
     if xlsx_path is None:
-        xlsx_path = _construct_path(path, '.xlsx')
+        xlsx_path = _construct_path(path, ".xlsx")
     if isinstance(df, pd.DataFrame):
         df.to_excel(xlsx_path, index=False)
     elif isinstance(df, list):
         # pylint: disable=abstract-class-instantiated
         with pd.ExcelWriter(xlsx_path) as writer:
             for i, df in enumerate(df):
-                df.to_excel(writer, sheet_name=f'{i+1:02d}', index=False)
+                df.to_excel(writer, sheet_name=f"{i+1:02d}", index=False)
