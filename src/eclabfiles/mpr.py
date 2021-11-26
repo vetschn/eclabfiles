@@ -171,7 +171,7 @@ data_column_dtypes = {
 # NOTE: Looking at .mpl files, the log module appears to consist of
 # multiple 'modify on' sections that start with an OLE timestamp.
 log_dtypes = {
-    0x0009: ('channel_number', '<u2'),
+    0x0009: ('channel_number', '|u1'),
     0x00ab: ('channel_sn', '<u2'),
     0x01f8: ('ewe_ctrl_min', '<f4'),
     0x01fc: ('ewe_ctrl_max', '<f4'),
