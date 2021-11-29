@@ -403,7 +403,7 @@ def _read_modules(file: TextIOWrapper) -> list:
         data_bytes = file.read(header["length"])
         modules.append({"header": header, "data": data_bytes})
         logging.debug(f"Read '{header['short_name']}' module.")
-        return modules
+    return modules
 
 
 def parse_mpr(path: str) -> list[dict]:
