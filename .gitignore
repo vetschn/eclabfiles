@@ -3,4 +3,3 @@ dist/
 build/
 *.egg-info
 *.egg
-tests/
