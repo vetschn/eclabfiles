@@ -15,6 +15,8 @@ from io import StringIO
 from eclabfiles.techniques import construct_params
 from eclabfiles.utils import literal_eval
 
+logger = logging.getLogger(__name__)
+
 
 def _parse_technique_params(technique: str, settings: list[str]) -> dict:
     """Finds the appropriate set of technique parameters.
@@ -36,16 +38,16 @@ def _parse_technique_params(technique: str, settings: list[str]) -> dict:
         A list of parameter keys corresponding to the given technique.
 
     """
-    logging.debug("Parsing technique parameters from `.mpt` header section...")
+    logger.debug("Parsing technique parameters from `.mpt` header section...")
     params_keys = construct_params(technique, settings)
-    logging.debug(
+    logger.debug(
         f"Determined a parameter set of length {len(params_keys)} for "
         f"{technique} technique."
     )
     params = settings[-len(params_keys) :]
     # The sequence param columns are always allocated 20 characters.
     n_sequences = int(len(params[0]) / 20)
-    logging.debug(f"Determined {n_sequences} technique sequences.")
+    logger.debug(f"Determined {n_sequences} technique sequences.")
     params_values = []
     for seq in range(1, n_sequences):
         params_values.append(
@@ -72,7 +74,7 @@ def _parse_loop_indexes(loops_lines: list[str]) -> dict:
         A dictionary with the number of loops and the loop indexes.
 
     """
-    logging.debug("Parsing the loops section in the `.mpt` header...")
+    logger.debug("Parsing the loops section in the `.mpt` header...")
     n_loops = int(re.match(r"Number of loops : (?P<val>.+)", loops_lines[0])["val"])
     loop_indexes = []
     for loop in range(n_loops):
@@ -101,15 +103,15 @@ def _parse_header(lines: list[str], n_header_lines: int) -> dict:
         settings, and a list of technique parameters.
 
     """
-    logging.debug("Parsing the `.mpt` header...")
+    logger.debug("Parsing the `.mpt` header...")
     header = {}
     if n_header_lines == 3:
-        logging.debug("No settings or loops present in given .mpt file.")
+        logger.debug("No settings or loops present in given .mpt file.")
         return header
     # At this point the first two lines have already been read.
     header_lines = lines[: n_header_lines - 3]
     if header_lines[0].startswith(r"Number of loops : "):
-        logging.debug("No settings but a loops section present in given .mpt file.")
+        logger.debug("No settings but a loops section present in given .mpt file.")
         header["loops"] = _parse_loop_indexes(header_lines)
         return header
     header_sections = "".join(header_lines).split(sep="\n\n")
@@ -142,7 +144,7 @@ def _parse_datapoints(lines: list[str], n_header_lines: int) -> list[dict]:
 
     """
     # At this point the first two lines have already been read.
-    logging.debug("Parsing the datapoints...")
+    logger.debug("Parsing the datapoints...")
     # Remove the extra column due to an extra tab in .mpt file field
     # names.
     field_names = lines[n_header_lines - 3].split("\t")[:-1]
@@ -176,7 +178,7 @@ def parse_mpt(path: str, encoding: str = "windows-1252") -> dict:
     with open(path, "r", encoding=encoding) as mpt:
         if mpt.readline() != file_magic:
             raise ValueError(f"Invalid file magic for given .mpt file: {path}")
-        logging.debug(f"Reading `.mpt` file at {path}")
+        logger.debug(f"Reading `.mpt` file at {path}")
         n_header_lines = int(mpt.readline().strip().split()[-1])
         lines = mpt.readlines()
     header = _parse_header(lines, n_header_lines)

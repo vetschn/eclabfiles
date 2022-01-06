@@ -16,10 +16,12 @@ from eclabfiles.mpt import parse_mpt
 from eclabfiles.techniques import construct_params
 from eclabfiles.utils import literal_eval
 
+logger = logging.getLogger(__name__)
+
 
 def _parse_header(headers: list[str]) -> dict:
     """Parses the header of a .mps file."""
-    logging.debug("Parsing the `.mps` header...")
+    logger.debug("Parsing the `.mps` header...")
     header = {}
     header["filename"] = headers[0].strip().split()[-1]
     header["general_settings"] = [line.strip() for line in headers[1].split("\n")]
@@ -28,7 +30,7 @@ def _parse_header(headers: list[str]) -> dict:
 
 def _parse_techniques(technique_sections: list[str]) -> list:
     """Parses the techniques section of a .mps file."""
-    logging.debug("Parsing the techniques section of the `.mps` file...")
+    logger.debug("Parsing the techniques section of the `.mps` file...")
     techniques = []
     for section in technique_sections:
         technique = {}
@@ -37,13 +39,13 @@ def _parse_techniques(technique_sections: list[str]) -> list:
         technique["technique"] = technique_name
         params = technique_lines[2:]
         params_keys = construct_params(technique_name, params)
-        logging.debug(
+        logger.debug(
             f"Determined a parameter set of length {len(params_keys)} for "
             f"{technique_name} technique."
         )
         # The sequence param columns are always allocated 20 characters.
         n_sequences = int(len(params[0]) / 20)
-        logging.debug(f"Determined {n_sequences} technique sequences.")
+        logger.debug(f"Determined {n_sequences} technique sequences.")
         params_values = []
         for seq in range(1, n_sequences):
             params_values.append(
@@ -76,7 +78,7 @@ def _load_technique_data(
         The list of technique dictionaries now including any data.
 
     """
-    logging.debug(
+    logger.debug(
         f"Trying to load data from {len(mpr_paths)} .mpr files and "
         f"{len(mpt_paths)} .mpt files..."
     )
@@ -124,7 +126,7 @@ def parse_mps(
     with open(path, "r", encoding=encoding) as mps:
         if mps.readline() != file_magic:
             raise ValueError("Invalid file magic for given .mps file.")
-        logging.debug("Reading `.mps` file...")
+        logger.debug("Reading `.mps` file...")
         sections = mps.read().split("\n\n")
     n_linked_techniques = int(sections[0].strip().split()[-1])
     header = _parse_header(sections[1:3])

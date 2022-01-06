@@ -13,6 +13,8 @@ from typing import Any
 
 import numpy as np
 
+logger = logging.getLogger(__name__)
+
 
 def literal_eval(literal: str) -> Any:
     """Evaluates a string as Python literal.
@@ -33,12 +35,12 @@ def literal_eval(literal: str) -> Any:
     try:
         return ast.literal_eval(literal)
     except Exception as ex:
-        logging.debug(f"Failed to evaluate string literal: {ex}.")
+        logger.debug(f"Failed to evaluate string literal: {ex}.")
     try:
         return float(literal)
     except ValueError as ex:
-        logging.debug(f"Failed to convert string literal to float: {ex}")
-    logging.debug(f"Failed to convert string literal. Returning it as str.")
+        logger.debug(f"Failed to convert string literal to float: {ex}")
+    logger.debug(f"Failed to convert string literal. Returning it as str.")
     return literal.strip()
 
 

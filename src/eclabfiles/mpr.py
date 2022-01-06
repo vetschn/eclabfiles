@@ -20,6 +20,8 @@ import numpy as np
 from eclabfiles.techniques import technique_params_dtypes
 from eclabfiles.utils import read_value, read_values
 
+logger = logging.getLogger(__name__)
+
 # Module header at the top of every VMP MODULE block.
 module_header_dtype = np.dtype(
     [
@@ -224,7 +226,7 @@ def _parse_settings(data: bytes) -> dict:
     # other factor that is unclear to me.
     params_offset = None
     for offset in [0x0572, 0x1845, 0x1846]:
-        logging.debug(f"Trying to find the technique parameters at {offset}.")
+        logger.debug(f"Trying to find the technique parameters at {offset}.")
         n_params = read_value(data, offset + 0x0002, "<u2")
         if isinstance(params_dtype, dict):
             # The params_dtype has multiple possible lengths if it's a
@@ -235,15 +237,15 @@ def _parse_settings(data: bytes) -> dict:
                     params_offset = offset
         elif len(params_dtype) == n_params:
             params_offset = offset
-            logging.debug(f"Determined  at 0x{offset:x}.")
+            logger.debug(f"Determined  at 0x{offset:x}.")
             break
     if params_offset is None:
         raise NotImplementedError(
             "Unknown parameter offset or unrecognized technique dtype."
         )
-    logging.debug(f"Reading number of parameter sequences at 0x{params_offset:x}.")
+    logger.debug(f"Reading number of parameter sequences at 0x{params_offset:x}.")
     ns = read_value(data, params_offset, "<u2")
-    logging.debug(f"Reading {ns} parameter sequences of {n_params} parameters.")
+    logger.debug(f"Reading {ns} parameter sequences of {n_params} parameters.")
     settings["params"] = read_values(data, params_offset + 0x0004, params_dtype, ns)
     return settings
 
@@ -281,12 +283,10 @@ def _construct_data_dtype(column_ids: list[int]) -> tuple[np.dtype, dict]:
             flags[name] = (bitmask, shift)
             if ("flags", "|u1") not in column_dtypes:
                 # Flags column only needs to be added once.
-                logging.debug("Found flags column.")
+                logger.debug("Found flags column.")
                 column_dtypes.append(("flags", "|u1"))
         elif column_id in data_column_dtypes:
-            logging.debug(
-                f"Found {data_column_dtypes[column_id]} ({column_id}) column."
-            )
+            logger.debug(f"Found {data_column_dtypes[column_id]} ({column_id}) column.")
             column_dtypes.append(data_column_dtypes[column_id])
         else:
             raise NotImplementedError(
@@ -324,12 +324,12 @@ def _parse_data(data: bytes, version: int) -> dict:
         offset = 0x0196
     else:
         raise NotImplementedError(f"Unknown data module version: {version}")
-    logging.debug(
+    logger.debug(
         f"Reading {n_datapoints} datapoints at an offset of 0x{offset:x} bytes."
     )
     datapoints = read_values(data, offset, data_dtype, n_datapoints)
     if flags:
-        logging.debug("Extracting flag values.")
+        logger.debug("Extracting flag values.")
         for datapoint in datapoints:
             for name, (bitmask, shift) in flags.items():
                 datapoint[name] = (datapoint["flags"] & bitmask) >> shift
@@ -395,14 +395,14 @@ def _read_modules(file: TextIOWrapper) -> list:
         Returns a list of modules with corresponding header and data.
 
     """
-    logging.debug("Reading `.mpr` modules.")
+    logger.debug("Reading `.mpr` modules.")
     modules = []
     while file.read(len(b"MODULE")) == b"MODULE":
         header_bytes = file.read(module_header_dtype.itemsize)
         header = read_value(header_bytes, 0, module_header_dtype)
         data_bytes = file.read(header["length"])
         modules.append({"header": header, "data": data_bytes})
-        logging.debug(f"Read '{header['short_name']}' module.")
+        logger.debug(f"Read '{header['short_name']}' module.")
     return modules
 
 
@@ -422,25 +422,25 @@ def parse_mpr(path: str) -> list[dict]:
     """
     file_magic = b"BIO-LOGIC MODULAR FILE\x1a                         \x00\x00\x00\x00"
     with open(path, "rb") as mpr:
-        logging.debug(f"Checking the file magic.")
+        logger.debug(f"Checking the file magic.")
         if mpr.read(len(file_magic)) != file_magic:
             raise ValueError("Invalid file magic for given `.mpr` file.")
         modules = _read_modules(mpr)
     for module in modules:
         name = module["header"]["short_name"]
         if name == "VMP Set   ":
-            logging.debug("Parsing settings module.")
+            logger.debug("Parsing settings module.")
             module["data"] = _parse_settings(module["data"])
         elif name == "VMP data  ":
             # The data points' offset depends on the module version.
-            logging.debug("Parsing data module.")
+            logger.debug("Parsing data module.")
             version = module["header"]["version"]
             module["data"] = _parse_data(module["data"], version)
         elif name == "VMP LOG   ":
-            logging.debug("Parsing log module.")
+            logger.debug("Parsing log module.")
             module["data"] = _parse_log(module["data"])
         elif name == "VMP loop  ":
-            logging.debug("Parsing loop module.")
+            logger.debug("Parsing loop module.")
             module["data"] = _parse_loop(module["data"])
         else:
             raise NotImplementedError(f"Unknown module {name}.")
