@@ -1,186 +1,293 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Read BioLogic's EC-Lab ASCII data files into dicts.
+"""Processing of BioLogic's EC-Lab ASCII export files.
 
-Author:         Nicolas Vetsch (veni@empa.ch / vetschnicolas@gmail.com)
-Organisation:   EMPA Dübendorf, Materials for Energy Conversion (501)
-Date:           2021-10-11
+File Structure of `.mpt` Files
+``````````````````````````````
 
+These human-readable files are sectioned into headerlines and datalines.
+The header part at is made up of information that can be found in the
+settings, log and loop modules of the binary `.mpr` file.
+
+
+Structure of Parsed Data
+````````````````````````
+
+The `process` function returns a tuple of data and metadata. The data is
+structured into a list of dicts, i.e. [{column -> value}, ...,
+{column -> value}]. If the file contains a settings header, each
+timestep will contain a POSIX timestamp in the `"uts"` column.
+
+The metadata dict is structured as follows:
+
+.. codeblock:: python
+
+    {
+        "raw": str, (optional)                      # The raw file header if present.
+        "settings": { (optional)                    # Settings if the file has a header.
+            "posix_timestamp": float,               # POSIX timestamp if present.
+            "technique": str,                       # Technique name.
+        },
+        "params": [ (optional)                      # Technique parameter sequences
+            {"param1": float, "param2": str, ...},
+            ...,
+            {"param1": float, "param2": str, ...},
+        ],
+        "units": [None, "s", "mA", ...],            # Units of the data columns in order.
+        "loops": { (optional)                       # Loops if file header contains a loops section.
+            "n_indexes": int,
+            "indexes": list[int],
+        }
+    }
+
+.. codeauthor:: Nicolas Vetsch <vetschnicolas@gmail.com>
 """
-import csv
 import logging
 import re
-from io import StringIO
+import warnings
 
-from eclabfiles.techniques import construct_params
-from eclabfiles.utils import literal_eval
+from dateutil import parser as dateparser
+
+from eclabfiles.techniques import technique_params
 
 logger = logging.getLogger(__name__)
 
 
-def _parse_technique_params(technique: str, settings: list[str]) -> dict:
-    """Finds the appropriate set of technique parameters.
+# Maps EC-Lab's "canonical" column names to proper names and unit.
+column_units = {
+    '"Ri"/Ohm': ("'Ri'", "Ohm"),
+    "-Im(Z)/Ohm": ("-Im(Z)", "Ohm"),
+    "-Im(Zce)/Ohm": ("-Im(Zce)", "Ohm"),
+    "-Im(Zwe-ce)/Ohm": ("-Im(Zwe-ce)", "Ohm"),
+    "(Q-Qo)/C": ("(Q-Qo)", "C"),
+    "(Q-Qo)/mA.h": ("(Q-Qo)", "mA·h"),
+    "<Ece>/V": ("<Ece>", "V"),
+    "<Ewe>/V": ("<Ewe>", "V"),
+    "<I>/mA": ("<I>", "mA"),
+    "|Ece|/V": ("|Ece|", "V"),
+    "|Energy|/W.h": ("|Energy|", "W·h"),
+    "|Ewe|/V": ("|Ewe|", "V"),
+    "|I|/A": ("|I|", "A"),
+    "|Y|/Ohm-1": ("|Y|", "S"),
+    "|Z|/Ohm": ("|Z|", "Ohm"),
+    "|Zce|/Ohm": ("|Zce|", "Ohm"),
+    "|Zwe-ce|/Ohm": ("|Zwe-ce|", "Ohm"),
+    "Analog IN 1/V": ("Analog IN 1", "V"),
+    "Analog IN 2/V": ("Analog IN 2", "V"),
+    "Capacitance charge/µF": ("Capacitance charge", "µF"),
+    "Capacitance discharge/µF": ("Capacitance discharge", "µF"),
+    "Capacity/mA.h": ("Capacity", "mA·h"),
+    "charge time/s": ("charge time", "s"),
+    "Conductivity/S.cm-1": ("Conductivity", "S/cm"),
+    "control changes": ("control changes", None),
+    "control/mA": ("control_I", "mA"),
+    "control/V": ("control_V", "V"),
+    "control/V/mA": ("control_V/I", "V/mA"),
+    "counter inc.": ("counter inc.", None),
+    "Cp-2/µF-2": ("Cp⁻²", "µF⁻²"),
+    "Cp/µF": ("Cp", "µF"),
+    "Cs-2/µF-2": ("Cs⁻²", "µF⁻²"),
+    "Cs/µF": ("Cs", "µF"),
+    "cycle number": ("cycle number", None),
+    "cycle time/s": ("cycle time", "s"),
+    "d(Q-Qo)/dE/mA.h/V": ("d(Q-Qo)/dE", "mA·h/V"),
+    "dI/dt/mA/s": ("dI/dt", "mA/s"),
+    "discharge time/s": ("discharge time", "s"),
+    "dQ/C": ("dQ", "C"),
+    "dq/mA.h": ("dq", "mA·h"),
+    "dQ/mA.h": ("dQ", "mA·h"),
+    "Ece/V": ("Ece", "V"),
+    "Ecell/V": ("Ecell", "V"),
+    "Efficiency/%": ("Efficiency", "%"),
+    "Energy charge/W.h": ("Energy charge", "W·h"),
+    "Energy discharge/W.h": ("Energy discharge", "W·h"),
+    "Energy/W.h": ("Energy", "W·h"),
+    "error": ("error", None),
+    "Ewe-Ece/V": ("Ewe-Ece", "V"),
+    "Ewe/V": ("Ewe", "V"),
+    "freq/Hz": ("freq", "Hz"),
+    "half cycle": ("half cycle", None),
+    "I Range": ("I Range", None),
+    "I/mA": ("I", "mA"),
+    "Im(Y)/Ohm-1": ("Im(Y)", "S"),
+    "mode": ("mode", None),
+    "Ns changes": ("Ns changes", None),
+    "Ns": ("Ns", None),
+    "NSD Ewe/%": ("NSD Ewe", "%"),
+    "NSD I/%": ("NSD I", "%"),
+    "NSR Ewe/%": ("NSR Ewe", "%"),
+    "NSR I/%": ("NSR I", "%"),
+    "ox/red": ("ox/red", None),
+    "P/W": ("P", "W"),
+    "Phase(Y)/deg": ("Phase(Y)", "deg"),
+    "Phase(Z)/deg": ("Phase(Z)", "deg"),
+    "Phase(Zce)/deg": ("Phase(Zce)", "deg"),
+    "Phase(Zwe-ce)/deg": ("Phase(Zwe-ce)", "deg"),
+    "Q charge/discharge/mA.h": ("Q charge/discharge", "mA·h"),
+    "Q charge/mA.h": ("Q charge", "mA·h"),
+    "Q charge/mA.h/g": ("Q charge", "mA·h/g"),
+    "Q discharge/mA.h": ("Q discharge", "mA·h"),
+    "Q discharge/mA.h/g": ("Q discharge", "mA·h/g"),
+    "R/Ohm": ("R", "Ohm"),
+    "Rcmp/Ohm": ("Rcmp", "Ohm"),
+    "Re(Y)/Ohm-1": ("Re(Y)", "S"),
+    "Re(Y)/Ohm-1": ("Re(Y)", "S"),
+    "Re(Z)/Ohm": ("Re(Z)", "Ohm"),
+    "Re(Z)/Ohm": ("Re(Z)", "Ohm"),
+    "Re(Zce)/Ohm": ("Re(Zce)", "Ohm"),
+    "Re(Zce)/Ohm": ("Re(Zce)", "Ohm"),
+    "Re(Zwe-ce)/Ohm": ("Re(Zwe-ce)", "Ohm"),
+    "Re(Zwe-ce)/Ohm": ("Re(Zwe-ce)", "Ohm"),
+    "step time/s": ("step time", "s"),
+    "THD Ewe/%": ("THD Ewe", "%"),
+    "THD I/%": ("THD I", "%"),
+    "time/s": ("time", "s"),
+    "x": ("x", None),
+    "z cycle": ("z cycle", None),
+}
 
-    Additionally takes care of the techniques that have a changing
-    number of parameters.
+
+def _process_header(lines: list[str]) -> tuple[dict, list, dict]:
+    """Processes the header lines.
 
     Parameters
     ----------
-    technique
-        The name of the technique.
-    settings
-        The lines containing all the settings including the technique
-        parameters.
+    lines
+        The header lines, starting at line 3 (which is an empty line),
+        right after the `"Nb header lines : "` line.
 
     Returns
     -------
-    dict
-        A list of parameter keys corresponding to the given technique.
+    tuple[dict, list, dict]
+        A dictionary containing the settings, parameter sequences and
+        and a dictionary containing the loop indexes.
 
     """
-    logger.debug("Parsing technique parameters from `.mpt` header section...")
-    params_keys = construct_params(technique, settings)
-    logger.debug(
-        f"Determined a parameter set of length {len(params_keys)} for "
-        f"{technique} technique."
-    )
-    params = settings[-len(params_keys) :]
+    settings = params = loops = None
+    sections = "\n".join(lines).split("\n\n")
+    # Can happen that no settings are present but just a loops section.
+    if sections[1].startswith("Number of loops : "):
+        logger.debug("File only contains a loop section.")
+    # Again, we need the acquisition time to get timestamped data.
+    technique = sections[1].strip()
+    settings_lines = sections[2].split("\n")
+    technique, params_keys = technique_params(technique, settings_lines)
+    params = settings_lines[-len(params_keys) :]
     # The sequence param columns are always allocated 20 characters.
     n_sequences = int(len(params[0]) / 20)
-    logger.debug(f"Determined {n_sequences} technique sequences.")
     params_values = []
     for seq in range(1, n_sequences):
-        params_values.append(
-            [literal_eval(param[seq * 20 : (seq + 1) * 20]) for param in params]
-        )
+        values = []
+        for param in params:
+            try:
+                val = float(param[seq * 20 : (seq + 1) * 20])
+            except ValueError:
+                val = param[seq * 20 : (seq + 1) * 20].strip()
+            values.append(val)
+        params_values.append(values)
     params = [dict(zip(params_keys, values)) for values in params_values]
-    return params, len(params_keys)
-
-
-def _parse_loop_indexes(loops_lines: list[str]) -> dict:
-    """Parses the loops section of an .mpt file header.
-
-    The function puts together the loop indexes like they are saved in
-    .mpr files.
-
-    Parameters
-    ----------
-    loops_lines
-        The .mpt file loops section as a list of strings.
-
-    Returns
-    -------
-    dict
-        A dictionary with the number of loops and the loop indexes.
-
-    """
-    logger.debug("Parsing the loops section in the `.mpt` header...")
-    n_loops = int(re.match(r"Number of loops : (?P<val>.+)", loops_lines[0])["val"])
-    loop_indexes = []
-    for loop in range(n_loops):
-        index = re.match(
-            r"Loop (.+) from point number (?P<val>.+) to (.+)", loops_lines[loop + 1]
-        )["val"]
-        loop_indexes.append(int(index))
-    return {"n": n_loops, "indexes": loop_indexes}
-
-
-def _parse_header(lines: list[str], n_header_lines: int) -> dict:
-    """Parses the header part of an .mpt file including loops.
-
-    Parameters
-    ----------
-    lines
-        All the lines of the .mpt file (except the two very first ones).
-    n_header_lines
-        The number of header lines from the line after the .mpt file
-        magic.
-
-    Returns
-    -------
-    dict
-        A dictionary containing the technique name, the general
-        settings, and a list of technique parameters.
-
-    """
-    logger.debug("Parsing the `.mpt` header...")
-    header = {}
-    if n_header_lines == 3:
-        logger.debug("No settings or loops present in given .mpt file.")
-        return header
-    # At this point the first two lines have already been read.
-    header_lines = lines[: n_header_lines - 3]
-    if header_lines[0].startswith(r"Number of loops : "):
-        logger.debug("No settings but a loops section present in given .mpt file.")
-        header["loops"] = _parse_loop_indexes(header_lines)
-        return header
-    header_sections = "".join(header_lines).split(sep="\n\n")
-    technique_name = header_sections[0].strip()
-    settings_lines = header_sections[1].split("\n")
-    header["technique"] = technique_name
-    header["params"], n_params = _parse_technique_params(technique_name, settings_lines)
-    header["settings"] = [line.strip() for line in settings_lines[:-n_params]]
-    if len(header_sections) == 3 and header_sections[2]:
+    settings_lines = [line.strip() for line in settings_lines[: -len(params_keys)]]
+    # Parse the acquisition timestamp.
+    # NOTE: These are the formats I have seen:
+    # "%m/%d/%Y %H:%M:%S", "%m.%d.%Y %H:%M:%S", "%m/%d/%Y %H:%M:%S.%f"
+    timestamp_re = re.compile(r"Acquisition started on : (?P<val>.+)")
+    timestamp_match = timestamp_re.search("\n".join(settings_lines))
+    timestamp = dateparser.parse(timestamp_match["val"], dayfirst=False)
+    if sections[-1].startswith("Number of loops : "):
         # The header contains a loops section.
-        loops_lines = header_sections[2].split("\n")
-        header["loops"] = _parse_loop_indexes(loops_lines)
-    return header
+        loops_lines = sections[-1].split("\n")
+        n_loops = int(loops_lines[0].split(":")[-1])
+        indexes = []
+        for n in range(n_loops):
+            index = loops_lines[n + 1].split("to")[0].split()[-1]
+            indexes.append(int(index))
+        loops = {"n_loops": n_loops, "indexes": indexes}
+    settings = {
+        "posix_timestamp": timestamp.timestamp(),
+        "technique": technique,
+    }
+    return settings, params, loops
 
 
-def _parse_datapoints(lines: list[str], n_header_lines: int) -> list[dict]:
-    """Parses the data part of an .mpt file.
+def _process_data(lines: list[str]) -> tuple[dict, list]:
+    """Processes the data lines.
 
     Parameters
     ----------
     lines
-        All the lines of the .mpt file as a list.
-    n_header_lines
-        The number of header lines parsed from the top of the .mpt file.
+        The data lines, starting right after the last header section.
+        The first line is an empty line, the column names can be found
+        on the second line.
 
     Returns
     -------
-    list[dict]
-        A list of dicts, each corresponding to a single data point.
+    tuple[dict, list]
+        A dictionary containing the datapoints in records format
+        ([{column -> value}, ..., {column -> value}]) and a list
+        containing the units in order of the columns.
 
     """
     # At this point the first two lines have already been read.
-    logger.debug("Parsing the datapoints...")
-    # Remove the extra column due to an extra tab in .mpt file field
-    # names.
-    field_names = lines[n_header_lines - 3].split("\t")[:-1]
-    data_lines = lines[n_header_lines - 2 :]
-    reader = csv.DictReader(
-        StringIO("".join(data_lines)), fieldnames=field_names, delimiter="\t"
-    )
-    datapoints_str = list(reader)
+    # Remove extra column due to an extra tab in .mpt file column names.
+    names = lines[1].split("\t")[:-1]
+    columns, units = zip(*[column_units[n] for n in names])
+    data_lines = lines[2:]
     datapoints = []
-    for datapoint_str in datapoints_str:
-        datapoint = {key: literal_eval(value) for key, value in datapoint_str.items()}
+    for line in data_lines:
+        values = line.split("\t")
+        datapoint = {}
+        for col, val in list(zip(columns, values)):
+            datapoint[col] = float(val)
         datapoints.append(datapoint)
-    return datapoints
+    return datapoints, list(units)
 
 
-def parse_mpt(path: str, encoding: str = "windows-1252") -> dict:
-    """Parses an EC-Lab .mpt file.
+def process(fn: str, encoding: str = "windows-1252") -> tuple[list, dict]:
+    """Processes EC-Lab human-readable text export files.
 
     Parameters
     ----------
-    path
-        Filepath of the EC-Lab .mpt file to read in.
+    fn
+        The file containing the data to parse.
+    encoding
+        Encoding of ``fn``, by default "windows-1252".
 
     Returns
     -------
-    dict
-        A dict containing all the parsed .mpt data.
+    (data, metadata) : tuple[list, dict]
+        Tuple containing the timesteps and metadata
 
     """
     file_magic = "EC-Lab ASCII FILE\n"
-    with open(path, "r", encoding=encoding) as mpt:
-        if mpt.readline() != file_magic:
-            raise ValueError(f"Invalid file magic for given .mpt file: {path}")
-        logger.debug(f"Reading `.mpt` file at {path}")
-        n_header_lines = int(mpt.readline().strip().split()[-1])
-        lines = mpt.readlines()
-    header = _parse_header(lines, n_header_lines)
-    datapoints = _parse_datapoints(lines, n_header_lines)
-    return {"header": header, "datapoints": datapoints}
+    with open(fn, "r", encoding=encoding) as mpt_file:
+        if mpt_file.read(len(file_magic)) != file_magic:
+            raise ValueError(f"Invalid file magic: {fn}")
+        mpt = mpt_file.read()
+    lines = mpt.split("\n")
+    nb_header_lines = int(lines[0].split()[-1])
+    if nb_header_lines < 3:
+        raise ValueError(f"Invalid file structure: {fn}")
+    header_lines = lines[: nb_header_lines - 3]
+    settings, params, loops = _process_header(header_lines)
+    data_lines = lines[nb_header_lines - 3 :]
+    data, units = _process_data(data_lines)
+    # Populate metadata.
+    meta = {}
+    if settings is not None and params is not None:
+        meta["raw"] = "\n".join(header_lines)
+        meta["settings"] = settings
+        meta["params"] = params
+        posix_timestamp = settings["posix_timestamp"]
+        for d in data:
+            d["uts"] = posix_timestamp + d["time"]
+    else:
+        warnings.warn("No settings and params present in file.")
+    if data is not None and units is not None:
+        meta["units"] = units
+    else:
+        raise ValueError("No data present in file.")
+    if loops is not None:
+        meta["loops"] = loops
+    else:
+        logger.debug("No loops present in file.")
+    return data, meta

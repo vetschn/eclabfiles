@@ -3,19 +3,14 @@
 """Functions for converting parsed EC-Lab file data to DataFrame, .csv
 and .xlsx.
 
-Author:         Nicolas Vetsch (veni@empa.ch / vetschnicolas@gmail.com)
-Organisation:   EMPA Dübendorf, Materials for Energy Conversion (501)
-Date:           2021-10-18
-
+.. codeauthor:: Nicolas Vetsch <vetschnicolas@gmail.com>
 """
 import os
 from typing import Union
 
 import pandas as pd
 
-from eclabfiles.mpr import parse_mpr
-from eclabfiles.mps import parse_mps
-from eclabfiles.mpt import parse_mpt
+from eclabfiles import mpr, mpt, mps
 
 
 def _construct_path(other_path: str, ext: str) -> str:
@@ -40,8 +35,8 @@ def _construct_path(other_path: str, ext: str) -> str:
     return this_path
 
 
-def parse(path: str) -> Union[list, dict]:
-    """Parses an EC-Lab file.
+def process(fn: str) -> Union[list, dict]:
+    """Processes an EC-Lab file.
 
     The function finds the file extension and tries to choose the
     correct parser.
@@ -57,16 +52,14 @@ def parse(path: str) -> Union[list, dict]:
         The parsed file.
 
     """
-    __, ext = os.path.splitext(path)
+    __, ext = os.path.splitext(fn)
     if ext == ".mpt":
-        parsed = parse_mpt(path)
-    elif ext == ".mpr":
-        parsed = parse_mpr(path)
-    elif ext == ".mps":
-        parsed = parse_mps(path)
-    else:
-        raise ValueError(f"Unrecognized file extension: {ext}")
-    return parsed
+        return mpt.process(fn)
+    if ext == ".mpr":
+        return mpr.process(fn)
+    if ext == ".mps":
+        return mps.process(fn)
+    raise NotImplementedError(f"Unrecognized file extension: {ext}")
 
 
 def to_df(path: str) -> Union[pd.DataFrame, list[pd.DataFrame]]:
@@ -75,7 +68,7 @@ def to_df(path: str) -> Union[pd.DataFrame, list[pd.DataFrame]]:
 
     The function finds the file extension and tries to choose the
     correct parser. If the file is an .mps settings file, this returns a
-    list of DataFrames.
+    MultiIndex Dataframe.
 
     Parameters
     ----------
@@ -84,23 +77,20 @@ def to_df(path: str) -> Union[pd.DataFrame, list[pd.DataFrame]]:
 
     Returns
     -------
-    Union[pd.DataFrame, list[pd.DataFrame]]
+    pd.DataFrame
         Data parsed from an .mpt/.mpr file or the data parsed from all
         techniques in an .mps file. Optionally also the parsed data is
         returned.
 
     """
     __, ext = os.path.splitext(path)
-    if ext == ".mpt":
-        mpt = parse_mpt(path)
-        mpt_records = mpt["datapoints"]
-        df = pd.DataFrame.from_dict(mpt_records)
-    elif ext == ".mpr":
-        mpr = parse_mpr(path)
-        mpr_records = mpr[1]["data"]["datapoints"]
-        df = pd.DataFrame.from_dict(mpr_records)
+    if ext == ".mpt" or ".mpr":
+        data, meta = process(path)
+        df = pd.DataFrame.from_dict(data)
+        df.attrs = meta
     elif ext == ".mps":
-        mps = parse_mps(path, load_data=True)
+        techniques, meta = mps.process(path)
+        # TODO
         data = mps["data"]
         dfs = []
         if "mpt" in data.keys():
