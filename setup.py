@@ -12,7 +12,7 @@ setuptools.setup(
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/vetschn/eclabfiles",
-    project_urls={"Bug Tracker": "https://github.com/vetschn/eclabfiles/issues",},
+    project_urls={"Bug Tracker": "https://github.com/vetschn/eclabfiles/issues"},
     classifiers=[
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",

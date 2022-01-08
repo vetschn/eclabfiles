@@ -5,3 +5,4 @@ build/
 *.egg
 *.ipynb
 *.ipynb_checkpoints
+.vscode

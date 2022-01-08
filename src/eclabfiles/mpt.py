@@ -260,8 +260,7 @@ def process(fn: str, encoding: str = "windows-1252") -> tuple[list, dict]:
     """
     file_magic = "EC-Lab ASCII FILE\n"
     with open(fn, "r", encoding=encoding) as mpt_file:
-        if mpt_file.read(len(file_magic)) != file_magic:
-            raise ValueError(f"Invalid file magic: {fn}")
+        assert mpt_file.readline() == file_magic, "Invalid file magic."
         mpt = mpt_file.read()
     lines = mpt.split("\n")
     nb_header_lines = int(lines[0].split()[-1])

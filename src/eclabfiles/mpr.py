@@ -683,8 +683,7 @@ def process(
     """
     file_magic = b"BIO-LOGIC MODULAR FILE\x1a                         \x00\x00\x00\x00"
     with open(fn, "rb") as mpr_file:
-        if mpr_file.read(len(file_magic)) != file_magic:
-            raise ValueError(f"Invalid file magic: {fn}")
+        assert mpr_file.readline() == file_magic, "Invalid file magic."
         mpr = mpr_file.read()
     # Process modules.
     modules = mpr.split(b"MODULE")[1:]
