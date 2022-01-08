@@ -2,13 +2,51 @@
 # -*- coding: utf-8 -*-
 """Processing of BioLogic's EC-Lab settings files.
 
+File Structure of `.mps` Files
+``````````````````````````````
+
+
+Structure of Parsed Data
+````````````````````````
+
+The `process` function returns a tuple of techniques and metadata. The
+techniques dictionary is structured like this:
+
+.. codeblock:: python
+
+    {
+        "1": {
+            "technique": str,                           # Technique short name.
+            "params": [ (optional)                      # Technique parameter sequences.
+                {"param1": float, "param2": str, ...},
+                ...,
+                {"param1": float, "param2": str, ...},
+            ],
+            "data": list (optional)                     # Data processed from data files.
+            "meta": dict (optional)                     # Metadata processed from data files.
+        },
+        "2":  {
+            "technique": str,                           #
+            "params": [ (optional)                      # Technique parameter sequences
+                {"param1": float, "param2": str, ...},
+                ...,
+                {"param1": float, "param2": str, ...},
+            ],
+        },
+        ...
+    }
+
+The metadata only contains the raw header from the top of settings
+files.
+
 .. codeauthor:: Nicolas Vetsch <vetschnicolas@gmail.com>
 """
 import glob
 import logging
 import os
 import warnings
-from eclabfiles import mpt, mpr
+
+from eclabfiles import mpr, mpt
 from eclabfiles.techniques import technique_params
 
 logger = logging.getLogger(__name__)
@@ -16,15 +54,17 @@ logger = logging.getLogger(__name__)
 
 def _process_techniques(techniques: list[str]) -> dict:
     """Processes the techniques.
-    
+
     Parameters
     ----------
-    filename
-
     techniques
-        
-    load_data
-    
+        A list of the linked techniques.
+
+    Returns
+    -------
+    dict
+        The processed techniques, indexed by technique number.
+
     """
     processed_techniques = {}
     for technique in techniques:
@@ -51,16 +91,20 @@ def _process_techniques(techniques: list[str]) -> dict:
     return processed_techniques
 
 
-def _load_technique_data(filename: str, techniques: dict, load_type: str = None) -> dict:
-    """Tries to load technique data from the same folder.
+def _load_technique_data(
+    filename: str, techniques: dict, load_type: str = None
+) -> dict:
+    """Loads technique data from the same folder.
 
     Parameters
     ----------
     filename
-
+        The complete filename of the settings file.
     techniques
-        The previously parsed list of technique dicts.
+        The dictionary of the previously processed techniques.
     load_type
+        The type of file to load in. Defaults to using binary data
+        files. Possible options are "mpr" and "mpt".
 
     Returns
     -------
@@ -99,29 +143,36 @@ def _load_technique_data(filename: str, techniques: dict, load_type: str = None)
     return techniques
 
 
-def process(fn: str, encoding: str = "windows-1252", load_data: bool = False, load_type: str = None) -> dict:
+def process(
+    fn: str,
+    encoding: str = "windows-1252",
+    load_data: bool = False,
+    load_type: str = None,
+) -> dict:
     """Processes EC-Lab settings files.
-
-    If there are .mpr or .mpt files present in the same folder, those
-    files are read in and returned as well.
 
     Parameters
     ----------
     fn
-        The file containing the data to parse.
+        The file containing the settings to parse.
     encoding
         Encoding of ``fn``, by default "windows-1252".
+    load_data
+        Whether to try and load data from the same folder as the given
+        settings file.
+    load_type
+        The type of file to load in. Defaults to using binary data
+        files. Possible options are "mpr" and "mpt".
 
     Returns
     -------
-    (data, metadata) : tuple[list, dict]
+    (data, metadata) : tuple[list, dict
         Tuple containing the timesteps and metadata
 
     """
     file_magic = "EC-LAB SETTING FILE\n"
     with open(fn, "r", encoding=encoding) as mps_file:
-        if mps_file.readline() != file_magic:
-            raise ValueError(f"Invalid file magic: {fn}")
+        assert mps_file.readline() == file_magic, "Invalid file magic."
         mps = mps_file.read()
     n_linked_techniques, filename, settings, *techniques = mps.split("\n\n")
     n_linked_techniques = int(n_linked_techniques.strip().split()[-1])
@@ -133,9 +184,3 @@ def process(fn: str, encoding: str = "windows-1252", load_data: bool = False, lo
     meta = {}
     meta["raw"] = filename + "\n\n" + settings
     return techniques, meta
-
-if __name__ == "__main__":
-    fn = r"G:\Limit\VMP3 data\Ueli\Ampcera-Batch10\20211210_B10P3_Ref_HT400C-3h_Li-3mm-280C-30min\20211210_B10P3_Ref_HT400C-3h_Li-3mm-280C-30min_EIS.mps"
-    process(fn, load_data=True, load_type="mpr")
-    print("")
-
