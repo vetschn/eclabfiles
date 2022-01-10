@@ -1,6 +1,6 @@
 # eclabfiles
-This is a package to parse and convert files from BioLogic's EC-Lab. The
-parsers build on [Chris Kerr's `galvani` package](https://github.com/chatcannon/galvani)
+This is a package to process and convert files from BioLogic's EC-Lab.
+The parsers build on [Chris Kerr's `galvani` package](https://github.com/chatcannon/galvani)
 and on the work of a previous civilian service member at Empa Lab 501,
 Jonas Krieger.
 
@@ -22,30 +22,28 @@ For `.mps` settings files you can specify the keyword `load_data` to
 also load the data files from the same folder.
 
 ```python
->>> import eclabfiles as ecf
->>> data, meta = ecf.process("./mpt_files/test_01_OCV.mpt")
+import eclabfiles as ecf
+data, meta = ecf.process("./mpt_files/test_01_OCV.mpt")
 ```
 
 The returned data structure may look a bit different depending on which
-filetype you read in. 
+filetype you read in.
 
 See [Filetypes and Processed Data Structure](#filetypes-and-processed-data-structure).
 
-### `to_df`: Converting Into DataFrame
+### `to_df`: Processing Into Dataframe
 Processes the file and converts it into a [Pandas `DataFrame`](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html).
 The `pd.DataFrame.attrs` will contain all the processed metadata.
 
 ```python
->>> import eclabfiles as ecf
->>> df = ecf.to_df("./mpr_files/test_02_CP.mpr")
+import eclabfiles as ecf
+df = ecf.to_df("./mpr_files/test_02_CP.mpr")
 ```
 
-If the given file is an `.mps`, all data files from the same folder will 
-be read into a `pd.DataFrame` with a [hierarchical index](https://pandas.pydata.org/pandas-docs/stable/user_guide/advanced.html#multiindex-advanced-indexing).
-
-The top-level index is the technique number. The `pd.DataFrame.attrs`
-will contain `.mps` metadata, as well as all techniques and their loaded
-metadata.
+If the given file is an `.mps`, all data files from the same folder will
+be read into a `pd.DataFrame` with a [hierarchical index](https://pandas.pydata.org/pandas-docs/stable/user_guide/advanced.html#multiindex-advanced-indexing). The top-level index is the technique
+number. The `pd.DataFrame.attrs` will contain `.mps` metadata, as well
+as all techniques and their loaded metadata.
 
 ### `to_csv`: Converting to CSV
 Process the file and write the data part into a `.csv` file at the

@@ -5,10 +5,10 @@ import setuptools
 
 setuptools.setup(
     name="eclabfiles",
-    version="0.3.10",
+    version="0.4.0",
     author="Nicolas Vetsch",
     author_email="vetschnicolas@gmail.com",
-    description="Parsing and converting of data files from BioLogic's EC-Lab.",
+    description="Processing and converting of data files from BioLogic's EC-Lab.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/vetschn/eclabfiles",
