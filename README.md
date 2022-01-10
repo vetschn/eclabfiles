@@ -5,7 +5,6 @@ and on the work of a previous civilian service member at Empa Lab 501,
 Jonas Krieger.
 
 ## Installation
-
 Use [pip](https://pip.pypa.io/en/stable/) to install eclabfiles.
 
 ```bash
@@ -14,8 +13,7 @@ Use [pip](https://pip.pypa.io/en/stable/) to install eclabfiles.
 
 ## Example Usage
 
-### `process`
-
+### `process`: Processing Into Dictionaries
 Process the data as it is stored in the corresponding file. The method
 automatically determines filetype and tries to apply the respective
 parser.
@@ -33,8 +31,7 @@ filetype you read in.
 
 See [Filetypes and Processed Data Structure](#filetypes-and-processed-data-structure).
 
-### `to_df`
-
+### `to_df`: Converting Into DataFrame
 Processes the file and converts it into a [Pandas `DataFrame`](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html).
 The `pd.DataFrame.attrs` will contain all the processed metadata.
 
@@ -45,13 +42,12 @@ The `pd.DataFrame.attrs` will contain all the processed metadata.
 
 If the given file is an `.mps`, all data files from the same folder will 
 be read into a `pd.DataFrame` with a [hierarchical index](https://pandas.pydata.org/pandas-docs/stable/user_guide/advanced.html#multiindex-advanced-indexing).
+
 The top-level index is the technique number. The `pd.DataFrame.attrs`
 will contain `.mps` metadata, as well as all techniques and their loaded
 metadata.
 
-
-### `to_csv`
-
+### `to_csv`: Converting to CSV
 Process the file and write the data part into a `.csv` file at the
 specified location.
 
@@ -63,8 +59,7 @@ specified location.
 The `csv_fn` parameter is optional. If left away, the method writes a
 `.csv` file into the same folder as the input file.
 
-### `to_excel`
-
+### `to_excel`: Converting to Excel
 Process the file and write the data part into an Excel `.xlsx` file at
 the specified location.
 
@@ -77,7 +72,6 @@ The `excel_fn` parameter is optional. If left away, the method writes
 a `.xlsx` file at the location of the input file.
 
 ## Filetypes and Processed Data Structure.
-
 The file types that are implemented are:
 
 | Filetype | Description                                                                          |
@@ -86,8 +80,7 @@ The file types that are implemented are:
 | `.mpt`   | Text format file generated when the user exports the raw `.mpr` file in text format. |
 | `.mps`   | Settings file, which contains all the parameters of the experiment.                  |
 
-### Processed `.mpr` files
-
+### Processed `.mpr` Files
 ```python
 data, meta = ecf.process("./test_01_OCV.mpr")
 ```
@@ -147,8 +140,7 @@ The `meta` processed from `.mpr` files looks like this:
 }
 ```
 
-### Processed `.mpt` files
-
+### Processed `.mpt` Files
 ```python
 data, meta = ecf.process("./test_01_OCV.mpt")
 ```
@@ -188,15 +180,13 @@ The `meta` processed from `.mpt` files looks like this:
 }
 ```
 
-### Processed `.mps` files
-
+### Processed `.mps` Files
 ```python
 techniques, meta = ecf.process("./test.mps")
 ```
 
 `.mps` files simply relate different `techniques` together and store no
 data, while the other files contain the measurements.
-
 
 For `.mps` settings files the `process` function returns the following
 the linked `techniques` instead of the data (each technique can contain
@@ -226,7 +216,6 @@ The `meta` processed from `.mpr` only contains the raw file header.
 ```
 
 ## Techniques
-
 Detecting and processing the technique parameter sequences is not
 implemented for all techniques as this is pretty tedious to do.
 Currently, the following techniques are implemented:
@@ -247,7 +236,6 @@ Currently, the following techniques are implemented:
 | ZIR        | IR compensation (PEIS)                          |
 
 ### Implementing further techniques
-
 In the best case you should have an `.mps`, `.mpr` and `.mpt` files
 ready that contain the technique you would like to implement.
 
