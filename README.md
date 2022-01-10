@@ -73,18 +73,18 @@ the specified location.
 >>> ecf.to_excel("./experiment/test.mps")
 ```
 
-The `excel_path` parameter is optional. If left away, the method writes
+The `excel_fn` parameter is optional. If left away, the method writes
 a `.xlsx` file at the location of the input file.
 
 ## Filetypes and Processed Data Structure.
 
 The file types that are implemented are:
 
-|        |                                                                                      |
-|--------|--------------------------------------------------------------------------------------|
-| `.mpr` | Raw data binary file, which also contains the current parameter settings             |
-| `.mpt` | Text format file generated when the user exports the raw `.mpr` file in text format. |
-| `.mps` | Settings file, which contains all the parameters of the experiment.                  |
+| Filetype | Description                                                                          |
+|----------|--------------------------------------------------------------------------------------|
+| `.mpr`   | Raw data binary file, which also contains the current parameter settings             |
+| `.mpt`   | Text format file generated when the user exports the raw `.mpr` file in text format. |
+| `.mps`   | Settings file, which contains all the parameters of the experiment.                  |
 
 ### Processed `.mpr` files
 
@@ -93,12 +93,12 @@ data, meta = ecf.process("./test_01_OCV.mpr")
 ```
 
 Any `data` returned by the `process` function for `.mpr` files is
-structured into record dictionaries, i. e.
+structured into record dictionaries:
 ```python
 [{column -> value}, ..., {column -> value}]
 ```
 
-The `meta` processed from `.mpr` looks like this:
+The `meta` processed from `.mpr` files looks like this:
 ```python
 {
     "settings": {  # (optional) Settings if present.
@@ -118,7 +118,7 @@ The `meta` processed from `.mpr` looks like this:
         "battery_capacity": float,
         "battery_capacity_unit": int
     },
-    "params": [  # (optional) Technique parameter sequences
+    "params": [  # (optional) Technique parameter sequences.
         {"param1": float, "param2": str, ...},
         ...,
         {"param1": float, "param2": str, ...},
@@ -154,7 +154,7 @@ data, meta = ecf.process("./test_01_OCV.mpt")
 ```
 
 Any `data` returned by the `process` function for `.mpr` files is
-structured into record dictionaries, i. e.
+structured into record dictionaries:
 ```python
 [{column -> value}, ..., {column -> value}]
 ```
@@ -162,7 +162,7 @@ structured into record dictionaries, i. e.
 The `.mpt` files generally contain a few more `data` columns than the
 corresponding binary `.mpr` files from what I have seen.
 
-The `meta` processed from `.mpt` looks like this:
+The `meta` processed from `.mpt` files looks like this:
 
 ```python
 {
@@ -171,7 +171,7 @@ The `meta` processed from `.mpt` looks like this:
         "posix_timestamp": float,  # POSIX timestamp if present.
         "technique": str,  # Technique name.
     },
-    "params": [  # (optional) Technique parameter sequences
+    "params": [  # (optional) Technique parameter sequences.
         {"param1": float, "param2": str, ...},
         {"param1": float, "param2": str, ...},
         ...,
@@ -218,7 +218,7 @@ data depending on `load_data`):
 }
 ```
 
-The metadata processed from `.mpr` only contains the raw file header.
+The `meta` processed from `.mpr` only contains the raw file header.
 ```python
 {
     "raw": str
@@ -231,20 +231,20 @@ Detecting and processing the technique parameter sequences is not
 implemented for all techniques as this is pretty tedious to do.
 Currently, the following techniques are implemented:
 
-|      |                                                 |
-|------|-------------------------------------------------|
-| CA   | Chronoamperometry / Chronocoulometry            |
-| CP   | Chronopotentiometry                             |
-| CV   | Cyclic Voltammetry                              |
-| GCPL | Galvanostatic Cycling with Potential Limitation |
-| GEIS | Galvano Electrochemical Impedance Spectroscopy  |
-| LOOP | Loop                                            |
-| LSV  | Linear Sweep Voltammetry                        |
-| MB   | Modulo Bat                                      |
-| OCV  | Open Circuit Voltage                            |
-| PEIS | Potentio Electrochemical Impedance Spectroscopy |
-| WAIT | Wait                                            |
-| ZIR  | IR compensation (PEIS)                          |
+| Short Name | Full Name                                       |
+|------------|-------------------------------------------------|
+| CA         | Chronoamperometry / Chronocoulometry            |
+| CP         | Chronopotentiometry                             |
+| CV         | Cyclic Voltammetry                              |
+| GCPL       | Galvanostatic Cycling with Potential Limitation |
+| GEIS       | Galvano Electrochemical Impedance Spectroscopy  |
+| LOOP       | Loop                                            |
+| LSV        | Linear Sweep Voltammetry                        |
+| MB         | Modulo Bat                                      |
+| OCV        | Open Circuit Voltage                            |
+| PEIS       | Potentio Electrochemical Impedance Spectroscopy |
+| WAIT       | Wait                                            |
+| ZIR        | IR compensation (PEIS)                          |
 
 ### Implementing further techniques
 
