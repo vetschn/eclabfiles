@@ -42,14 +42,11 @@ files.
 .. codeauthor:: Nicolas Vetsch <vetschnicolas@gmail.com>
 """
 import glob
-import logging
 import os
 import warnings
 
 from eclabfiles import mpr, mpt
 from eclabfiles.techniques import technique_params
-
-logger = logging.getLogger(__name__)
 
 
 def _process_techniques(techniques: list[str]) -> dict:
@@ -121,7 +118,7 @@ def _load_technique_data(
     base_path, __ = os.path.splitext(filename)
     # Load data and metadata.
     if load_type is None:
-        warnings.warn("Default loadtype is 'mpr'. Set explicitly to use 'mpt'.")
+        warnings.warn("Default load_type is 'mpr'. Set explicitly to use 'mpt'.")
         load_type = "mpr"
     # NOTE: It's assumed that sorting your data files by name puts them
     # in the order in which they appear in the settings file.
@@ -136,7 +133,7 @@ def _load_technique_data(
             raise ValueError("Data incomplete.")
         data, meta = [list(t) for t in zip(*[mpt.process(path) for path in mpt_paths])]
     else:
-        raise ValueError(f"Unrecognised loadtype: {load_type}")
+        raise ValueError(f"Unrecognised load_type: {load_type}")
     for num in expected_techniques:
         techniques[num]["data"] = data.pop(0)
         techniques[num]["meta"] = meta.pop(0)
