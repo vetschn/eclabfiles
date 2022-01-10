@@ -3,3 +3,6 @@ dist/
 build/
 *.egg-info
 *.egg
+*.ipynb
+*.ipynb_checkpoints
+.vscode
