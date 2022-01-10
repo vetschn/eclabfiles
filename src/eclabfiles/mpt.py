@@ -33,7 +33,7 @@ The metadata dict is structured as follows:
             ...,
             {"param1": float, "param2": str, ...},
         ],
-        "units": [None, "s", "mA", ...],            # Units of the data columns in order.
+        "units": {"time": "s", "mode": None, ...},  # Units of the data columns in order.
         "loops": { (optional)                       # Loops if file header contains a loops section.
             "n_indexes": int,
             "indexes": list[int],
@@ -167,7 +167,7 @@ def _process_header(lines: list[str]) -> tuple[dict, list, dict]:
     sections = "\n".join(lines).split("\n\n")
     # Can happen that no settings are present but just a loops section.
     if sections[1].startswith("Number of loops : "):
-        logger.debug("File only contains a loop section.")
+        logger.info("File only contains a loop section.")
     # Again, we need the acquisition time to get timestamped data.
     technique = sections[1].strip()
     settings_lines = sections[2].split("\n")
@@ -209,7 +209,7 @@ def _process_header(lines: list[str]) -> tuple[dict, list, dict]:
     return settings, params, loops
 
 
-def _process_data(lines: list[str]) -> tuple[dict, list]:
+def _process_data(lines: list[str]) -> tuple[list, dict]:
     """Processes the data lines.
 
     Parameters
@@ -221,10 +221,10 @@ def _process_data(lines: list[str]) -> tuple[dict, list]:
 
     Returns
     -------
-    tuple[dict, list]
+    tuple[dict, dict]
         A dictionary containing the datapoints in records format
-        ([{column -> value}, ..., {column -> value}]) and a list
-        containing the units in order of the columns.
+        ([{column -> value}, ..., {column -> value}]) and a dictionary
+        containing the units indexed by the columns.
 
     """
     # At this point the first two lines have already been read.
@@ -239,7 +239,7 @@ def _process_data(lines: list[str]) -> tuple[dict, list]:
         for col, val in list(zip(columns, values)):
             datapoint[col] = float(val)
         datapoints.append(datapoint)
-    return datapoints, list(units)
+    return datapoints, dict(zip(columns, units))
 
 
 def process(fn: str, encoding: str = "windows-1252") -> tuple[list, dict]:
@@ -288,5 +288,5 @@ def process(fn: str, encoding: str = "windows-1252") -> tuple[list, dict]:
     if loops is not None:
         meta["loops"] = loops
     else:
-        logger.debug("No loops present in file.")
+        logger.info("No loops present in file.")
     return data, meta

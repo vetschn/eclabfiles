@@ -162,7 +162,7 @@ The metadata dict is structured as follows:
             ...,
             {"param1": float, "param2": str, ...},
         ],
-        "units": [None, "s", "mA", ...],            # Units of the data columns in order.
+        "units": {"time": "s", "mode": None, ...},  # Units of the data columns in order.
         "log": { (optional)                         # Log if file has a log module.
             "channel_number": int,
             "channel_sn": int,
@@ -184,9 +184,9 @@ The metadata dict is structured as follows:
 .. codeauthor:: Nicolas Vetsch <vetschnicolas@gmail.com>
 """
 import logging
+import warnings
 from datetime import datetime, timedelta
 from typing import Any
-import warnings
 
 import numpy as np
 
@@ -510,7 +510,6 @@ def _process_settings(data: bytes) -> tuple[dict, list]:
     # other factor that is unclear to me.
     params_offset = None
     for offset in (0x0572, 0x1845, 0x1846):
-        logger.debug(f"Trying to find the technique parameters at {offset:x}.")
         n_params = _read_value(data, offset + 0x0002, "<u2")
         if isinstance(params_dtype, list):
             # The params_dtype has multiple possible lengths if a list.
@@ -519,13 +518,10 @@ def _process_settings(data: bytes) -> tuple[dict, list]:
                     params_dtype, params_offset = dtype, offset
         elif len(params_dtype) == n_params:
             params_offset = offset
-            logger.debug(f"Determined {n_params} parameters at 0x{offset:x}.")
             break
     if params_offset is None:
         raise NotImplementedError("Unknown parameter offset or technique dtype.")
-    logger.debug(f"Reading number of parameter sequences at 0x{params_offset:x}.")
     ns = _read_value(data, params_offset, "<u2")
-    logger.debug(f"Reading {ns} parameter sequences of {n_params} parameters.")
     params = _read_values(data, params_offset + 0x0004, params_dtype, ns)
     return settings, params
 
@@ -574,7 +570,7 @@ def _parse_columns(column_ids: list[int]) -> tuple[list, list, list, dict]:
     return names, dtypes, units, flags
 
 
-def _process_data(data: bytes, version: int) -> list[dict]:
+def _process_data(data: bytes, version: int) -> tuple[list, dict]:
     """Processes the contents of data modules.
 
     Parameters
@@ -586,11 +582,10 @@ def _process_data(data: bytes, version: int) -> list[dict]:
 
     Returns
     -------
-    list[dict]
-        Processed data ([{column -> value}, ..., {column -> value}]). If
-        the column unit is set to None, the value is an int. Otherwise,
-        the value is a dict with value ("n"), sigma ("s"), and unit
-        ("u").
+    tuple[dict, dict]
+        A dictionary containing the datapoints in records format
+        ([{column -> value}, ..., {column -> value}]) and a dictionary
+        containing the units indexed by the columns.
 
     """
     n_datapoints = _read_value(data, 0x0000, "<u4")
@@ -608,7 +603,6 @@ def _process_data(data: bytes, version: int) -> list[dict]:
         raise NotImplementedError(f"Unknown data module version: {version}")
     datapoints = _read_values(data, offset, data_dtype, n_datapoints)
     if flags:
-        logger.debug("Extracting flag values.")
         for datapoint in datapoints:
             flag_bits = datapoint.pop("flags")
             for name, bitmask in flags.items():
@@ -617,7 +611,7 @@ def _process_data(data: bytes, version: int) -> list[dict]:
                 shift = (bitmask & -bitmask).bit_length() - 1
                 # Rightshift flag by that amount.
                 datapoint[name] = (flag_bits & bitmask) >> shift
-    return datapoints, units
+    return datapoints, dict(zip(names, units))
 
 
 def _process_log(data: bytes) -> dict:
@@ -661,9 +655,7 @@ def _process_loop(data: bytes) -> dict:
     return {"n_indexes": n_indexes, "indexes": indexes}
 
 
-def process(
-    fn: str, encoding: str = "windows-1252", timezone: str = "localtime"
-) -> tuple[list, dict]:
+def process(fn: str, encoding: str = "windows-1252") -> tuple[list, dict]:
     """Processes EC-Lab raw data binary files.
 
     Parameters
@@ -672,18 +664,16 @@ def process(
         The file containing the data to parse.
     encoding
         Encoding of ``fn``, by default "windows-1252".
-    timezone
-        A string description of the timezone. Default is "localtime".
 
     Returns
     -------
-    (data, metadata) : tuple[list, dict]
-        Tuple containing the timesteps and metadata.
+    tuple[list, dict]
+        Tuple containing the data and metadata.
 
     """
     file_magic = b"BIO-LOGIC MODULAR FILE\x1a                         \x00\x00\x00\x00"
     with open(fn, "rb") as mpr_file:
-        assert mpr_file.readline() == file_magic, "Invalid file magic."
+        assert mpr_file.read(len(file_magic)) == file_magic, "Invalid file magic."
         mpr = mpr_file.read()
     # Process modules.
     modules = mpr.split(b"MODULE")[1:]
@@ -691,7 +681,6 @@ def process(
     for module in modules:
         header = _read_value(module, 0x0000, module_header_dtype)
         name = header["short_name"].strip()
-        logger.debug(f"Read '{name}' module.")
         module_data = module[module_header_dtype.itemsize :]
         if name == "VMP Set":
             settings, params = _process_settings(module_data)
@@ -723,5 +712,5 @@ def process(
     if loop is not None:
         meta["loops"] = loop
     else:
-        logger.debug("No loops present in file.")
+        logger.info("No loops present in file.")
     return data, meta
