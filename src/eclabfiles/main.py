@@ -10,7 +10,7 @@ from typing import Union
 
 import pandas as pd
 
-from eclabfiles import mpr, mpt, mps
+from eclabfiles import mpr, mps, mpt
 
 
 def _construct_path(other_path: str, ext: str) -> str:
@@ -43,13 +43,13 @@ def process(fn: str) -> Union[list, dict]:
 
     Parameters
     ----------
-    path
+    fn
         The path to an EC-Lab file (.mpt/.mpr/.mps)
 
     Returns
     -------
-    Union[list, dict]
-        The parsed file.
+    Union[dict, dict]
+        The processed file. Data files return 
 
     """
     __, ext = os.path.splitext(fn)
