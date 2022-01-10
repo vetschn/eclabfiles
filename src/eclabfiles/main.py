@@ -132,7 +132,7 @@ def to_df(fn: str, encoding: str = "windows-1252", **kwargs) -> pd.DataFrame:
             if "data" in technique:
                 dfs[num] = pd.DataFrame.from_records(technique.pop("data"))
         df = pd.concat(dfs)
-        df.attrs = meta | techniques
+        df.attrs = meta | {"techniques": techniques}
     else:
         raise ValueError(f"Unrecognized file extension: {ext}")
     return df

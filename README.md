@@ -1,6 +1,12 @@
 # eclabfiles
+This is a package to parse and convert files from BioLogic's EC-Lab. The
+parsers build on [Chris Kerr's `galvani` package](https://github.com/chatcannon/galvani)
+and on the work of a previous civilian service member at Empa Lab 501,
+Jonas Krieger.
 
-This is a package to parse files from BioLogic's EC-Lab. The parsers build on [Chris Kerr's `galvani` package](https://github.com/chatcannon/galvani) and on the work of a previous civilian service member at Empa Lab 501, Jonas Krieger.
+## Installation
+
+Use [pip](https://pip.pypa.io/en/stable/) to install eclabfiles.
 
 ```bash
 > pip install eclabfiles
@@ -8,226 +14,276 @@ This is a package to parse files from BioLogic's EC-Lab. The parsers build on [C
 
 ## Example Usage
 
-### `parse`
+### `process`
 
-Parse the data as it is stored in the corresponding file. The method automatically determines filetype and tries to apply the respective parser.
+Process the data as it is stored in the corresponding file. The method
+automatically determines filetype and tries to apply the respective
+parser.
+
+For `.mps` settings files you can specify the keyword `load_data` to
+also load the data files from the same folder.
 
 ```python
 >>> import eclabfiles as ecf
->>> ecf.parse("./mpt_files/test_01_OCV.mpt")
+>>> data, meta = ecf.process("./mpt_files/test_01_OCV.mpt")
 ```
 
-The returned data structure may look quite different depending on which file type you read in as the different filetypes also store the same data in very different ways. See [section filetypes](#Filetypes).
+The returned data structure may look a bit different depending on which
+filetype you read in. 
 
+See [Filetypes and Processed Data Structure](#filetypes-and-processed-data-structure).
 
 ### `to_df`
 
-Parse the file and transform only the data part into a Pandas `DataFrame`. 
-
+Processes the file and converts it into a [Pandas `DataFrame`](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html).
+The `pd.DataFrame.attrs` will contain all the processed metadata.
 
 ```python
 >>> import eclabfiles as ecf
->>> ecf.to_df("./mpr_files/test_02_CP.mpr")
+>>> df = ecf.to_df("./mpr_files/test_02_CP.mpr")
 ```
 
-If the given file is an `.mps` settings file, then the program tries to read the data from any `.mpt` and `.mpr` files in the same folder if they are present. In that case a `list` of `DataFrame`s is returned.
+If the given file is an `.mps`, all data files from the same folder will 
+be read into a `pd.DataFrame` with a [hierarchical index](https://pandas.pydata.org/pandas-docs/stable/user_guide/advanced.html#multiindex-advanced-indexing).
+The top-level index is the technique number. The `pd.DataFrame.attrs`
+will contain `.mps` metadata, as well as all techniques and their loaded
+metadata.
 
 
 ### `to_csv`
 
-Parse the file and write the data part into a `.csv` file at the specified location.
+Process the file and write the data part into a `.csv` file at the
+specified location.
 
 ```python
 >>> import eclabfiles as ecf
->>> ecf.to_csv("./mpt_files/test_03_PEIS.mpt", "./csv_files/test_PEIS.csv")
+>>> ecf.to_csv("./mpt_files/test_03_PEIS.mpt", csv_fn="./csv_files/test_PEIS.csv")
 ```
 
-The `csv_path` parameter is optional. If left away, the method writes a `.csv` file at the location of the input file.
+The `csv_fn` parameter is optional. If left away, the method writes a
+`.csv` file into the same folder as the input file.
 
-If the file is a settings file, this method does as `to_df()` does and writes multiple numbered `.csv` files.
+### `to_excel`
 
-
-### `to_xlsx`
-
-Parse the file and write the data part into an Excel `.xlsx` file at the specified location.
+Process the file and write the data part into an Excel `.xlsx` file at
+the specified location.
 
 ```python
 >>> import eclabfiles as ecf
->>> ecf.to_xlsx("./experiment/test.mps")
+>>> ecf.to_excel("./experiment/test.mps")
 ```
 
-The `xlsx_path` parameter is optional. If left away, the method writes a `.xlsx` file at the location of the input file.
+The `excel_path` parameter is optional. If left away, the method writes
+a `.xlsx` file at the location of the input file.
 
-If the file is a settings file, this method writes multiple numbered sheets into the Excel file.
-
-
-## Filetypes
+## Filetypes and Processed Data Structure.
 
 The file types that are implemented are:
 
-- `.mpt`: The `.mpt` file is a text format file generated when the user exports the raw `.mpr` file in text format.
-- `.mpr`: Raw data binary file, which contains the current parameter settings (refreshed at each modification) of the detailed diagram and cell characteristic windows.
-- `.mps`: Settings file, which contains all the parameters of the experiment.
+|        |                                                                                      |
+|--------|--------------------------------------------------------------------------------------|
+| `.mpr` | Raw data binary file, which also contains the current parameter settings             |
+| `.mpt` | Text format file generated when the user exports the raw `.mpr` file in text format. |
+| `.mps` | Settings file, which contains all the parameters of the experiment.                  |
 
-The `.mpt` files generally contain a few more data columns than the corresponding binary `.mpr` files from what I have seen.
-
-The `.mps` files simply relate different techniques together and store no data, while the other files contain the measurements.
-
-### Structure of parsed `.mpt` files
+### Processed `.mpr` files
 
 ```python
-{
-    'header': {
-        'technique', #*
-        'settings', #*
-        'params': [{}], #*
-        'loops': { #*
-            'n',
-            'indexes': [],
-        },
-    },
-    'datapoints': [{}],
-}
+data, meta = ecf.process("./test_01_OCV.mpr")
 ```
 
-### Structure of parsed `.mpr` files
-
+Any `data` returned by the `process` function for `.mpr` files is
+structured into record dictionaries, i. e.
 ```python
-[
-    {
-        'header': {
-            'short_name',
-            'long_name',
-            'length',
-            'version',
-            'date',
-        },
-        'data': {
-            'technique',
-            'comments',
-            'active_material_mass',
-            'at_x',
-            'molecular_weight',
-            'atomic_weight',
-            'acquisition_start',
-            'e_transferred',
-            'electrode_material',
-            'electrolyte',
-            'electrode_area',
-            'reference_electrode',
-            'characteristic_mass',
-            'battery_capacity',
-            'battery_capacity_unit',
-            'params': {},
-        },
-    },
-    {
-        'header': {
-            'short_name',
-            'long_name',
-            'length',
-            'version',
-            'date',
-        },
-        'data': {
-            'n_datapoints'
-            'n_columns'
-            'datapoints': [{}]
-        },
-    },
-    { #*
-        'header': {
-            'short_name',
-            'long_name',
-            'length',
-            'version',
-            'date',
-        },
-        'data': {
-            'ewe_ctrl_min',
-            'ewe_ctrl_max',
-            'ole_timestamp',
-            'filename',
-            'host',
-            'address',
-            'ec_lab_version',
-            'server_version',
-            'interpreter_version',
-            'device_sn',
-            'averaging_points',
-        },
-    },
-    { #*
-        'header': {
-            'short_name',
-            'long_name',
-            'length',
-            'version',
-            'date',
-        },
-        'data': {
-            'n_indexes',
-            'indexes': [],
-        },
-    },
-]
+[{column -> value}, ..., {column -> value}]
 ```
 
-### Structure of parsed `.mps` files
-
+The `meta` processed from `.mpr` looks like this:
 ```python
 {
-    'header': { #*
-        'filename',
-        'general_settings': [],
+    "settings": {  # (optional) Settings if present.
+        "technique": str,  # Technique name.
+        "comments": str,  # Cell characteristics.
+        "active_material_mass": float,
+        "at_x": float,
+        "molecular_weight": float,
+        "atomic_weight": float,
+        "acquisition_start": float,
+        "e_transferred": int,
+        "electrode_material": str,
+        "electrolyte": str,
+        "electrode_area": float,
+        "reference_electrode": str,
+        "characteristic_mass": float,
+        "battery_capacity": float,
+        "battery_capacity_unit": int
     },
-    'techniques': [
-        {
-            'technique',
-            'params',
-            
-        },
+    "params": [  # (optional) Technique parameter sequences
+        {"param1": float, "param2": str, ...},
+        ...,
+        {"param1": float, "param2": str, ...},
     ],
-    'data': { #*
-        'mpr': [],
-        'mpt': [],
+    "units": {  # Units of the data columns.
+        "time": "s",
+        "mode": None,
+        ...,
+        },
+    "log": {  # (optional) Log if present.
+        "channel_number": int,
+        "channel_sn": int,
+        "Ewe_ctrl_min": float,
+        "Ewe_ctrl_max": float,
+        "ole_timestamp": float,
+        "filename": str,
+        "host": str,
+        "address": str,
+        "ec_lab_version": str,
+        "server_version": str,
+        "interpreter_version": str,
+        "device_sn": str,
+        "averaging_points": int,
+        "posix_timestamp": float,
     },
 }
 ```
 
-All the substructures marked with `#*` are not certain to be present in a given file. Also, no guarantees that the rest is *always* present.
+### Processed `.mpt` files
 
-This is especially relevant for `.mpt` files, which sometimes contain only data and no header info at all.
+```python
+data, meta = ecf.process("./test_01_OCV.mpt")
+```
+
+Any `data` returned by the `process` function for `.mpr` files is
+structured into record dictionaries, i. e.
+```python
+[{column -> value}, ..., {column -> value}]
+```
+
+The `.mpt` files generally contain a few more `data` columns than the
+corresponding binary `.mpr` files from what I have seen.
+
+The `meta` processed from `.mpt` looks like this:
+
+```python
+{
+    "raw": str,  # (optional) The raw file header if present.
+    "settings": {  # (optional) Settings if the file has a header.
+        "posix_timestamp": float,  # POSIX timestamp if present.
+        "technique": str,  # Technique name.
+    },
+    "params": [  # (optional) Technique parameter sequences
+        {"param1": float, "param2": str, ...},
+        {"param1": float, "param2": str, ...},
+        ...,
+    ],
+    "units": {  # Units of the data columns.
+        "time": "s",
+        "mode": None,
+        ...,
+    },
+    "loops": {  # (optional) Loops if present.
+        "n_indexes": int,
+        "indexes": list[int],
+    }
+}
+```
+
+### Processed `.mps` files
+
+```python
+techniques, meta = ecf.process("./test.mps")
+```
+
+`.mps` files simply relate different `techniques` together and store no
+data, while the other files contain the measurements.
+
+
+For `.mps` settings files the `process` function returns the following
+the linked `techniques` instead of the data (each technique can contain
+data depending on `load_data`):
+
+```python
+{
+    "1": {
+        "technique": str,  # Technique name.
+        "params": [  # (optional) Technique parameter sequences.
+            {"param1": float, "param2": str, ...},
+            ...,
+            {"param1": float, "param2": str, ...},
+        ],
+        "data": list[dict]  # (optional) Data processed from data files.
+        "meta": dict  # (optional) Metadata processed from data files.
+    },
+    ...
+}
+```
+
+The metadata processed from `.mpr` only contains the raw file header.
+```python
+{
+    "raw": str
+}
+```
 
 ## Techniques
 
-The techniques implemented are:
+Detecting and processing the technique parameter sequences is not
+implemented for all techniques as this is pretty tedious to do.
+Currently, the following techniques are implemented:
 
-- `CA`
-- `CP`
-- `CV`
-- `GCPL`
-- `GEIS`
-- `LOOP`
-- `LSV`
-- `MB`
-- `OCV`
-- `PEIS`
-- `WAIT`
-- `ZIR` (`TODO` for .mpr)
+|      |                                                 |
+|------|-------------------------------------------------|
+| CA   | Chronoamperometry / Chronocoulometry            |
+| CP   | Chronopotentiometry                             |
+| CV   | Cyclic Voltammetry                              |
+| GCPL | Galvanostatic Cycling with Potential Limitation |
+| GEIS | Galvano Electrochemical Impedance Spectroscopy  |
+| LOOP | Loop                                            |
+| LSV  | Linear Sweep Voltammetry                        |
+| MB   | Modulo Bat                                      |
+| OCV  | Open Circuit Voltage                            |
+| PEIS | Potentio Electrochemical Impedance Spectroscopy |
+| WAIT | Wait                                            |
+| ZIR  | IR compensation (PEIS)                          |
 
-### Notes on implementing further techniques
+### Implementing further techniques
 
-In the best case you should have an `.mps`, `.mpr` and `.mpt` files ready that contain the technique you would like to implement.
+In the best case you should have an `.mps`, `.mpr` and `.mpt` files
+ready that contain the technique you would like to implement.
 
-For the parsing of EC-Lab ASCII files (`.mpt`/`.mps`) you simply add a `list` of parameter names in `technique_params.py` as they appear in these text files. If the technique has a changing number of parameters in these ASCII files, e.g. it contains a modifiable number of 'Limits' or 'Records', define the technique as a dictionary containing `head` and `tail`, like with `PEIS`. Then also write a function that completes the technique parameters (compare `construct_peis_params`). 
+For the parsing of EC-Lab ASCII files (`.mpt`/`.mps`) you add a function
+with a `list` of parameter names in `techniques.py` in the order they
+appear in the text files. See `_wait_params()` to get an idea.
 
-Make sure to also add the list of technique parameters into the `technique_params` dictionary or to add a case for the technique in `_parse_technique_params` / `_parse_techniques` in the `mpt.py` / `mps.py` modules.
+If the technique has a changing number of parameters in these ASCII
+files, e.g. it contains a modifiable number of 'Limits' or 'Records',
+you have to write a slightly more complicated function. Compare
+`_peis_params()`.
 
-If you want to implement the technique in the `.mpr` file parser, you will need to define a corresponding Numpy `dtype` in the `technique_params.py` module. I would recommend getting a solid hex editor (e.g. Hexinator, Hex Editor Neo) to find the actual binary data type of each parameter.
+Finally, add a case for the parsing function into `technique_params()`.
 
-From the `.mpr` files I have seen, you will usually find the parameters at an offset of `0x1845` from the start of the data section in the `VMP settings` module or somewhere around there. Compare the parameter values in the binary data to the values in the corresponding ASCII files. 
+If you want to implement the technique in the `.mpr` file parser, you
+will need to define a corresponding Numpy `np.dtype` in the
+`techniques.py` module. I would recommend getting a solid hex editor
+(e.g. Hexinator, Hex Editor Neo) to find the actual binary data type of
+each parameter.
 
-As a rule of thumb, floats are usually 32bit little-endian (`<f4`), integers are often 8bit (`|u1`) or 16bit (`<u2`) wide and units are stored in 8bit integers. I have not gotten around to linking the integer value with the corresponding unit yet.
+From the `.mpr` files I have seen, you will usually find the parameter
+sequences at an offset of `0x1845` from the start of the data section in
+the `VMP settings` module or somewhere around there. Compare the
+parameter values in the binary data to the values in the corresponding
+ASCII files.
+
+As a rule of thumb, floats are usually 32bit little-endian (`<f4`),
+integers are often 8bit (`|u1`) or 16bit (`<u2`) wide and units are
+stored in 8bit integers. I have not gotten around to linking the integer
+value with the corresponding unit yet.
+
+If the technique has a changing number of parameters, make a list of
+Numpy `dtype`s. Compare `_mb_params_dtypes` to see how this looks.
+
+Finally, add your `np.dtype` or `list[np.dtype]` to the
+`technique_params_dtypes` dictionary indexed by the technique ID. This
+ID is the first byte value after the `VMP settings` module's header.
 
 Good luck!
