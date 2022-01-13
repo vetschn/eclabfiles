@@ -40,7 +40,7 @@ def _prepend_ns(settings: list[str], params: list) -> list[str]:
         The 'Ns'-prepended parameters or the unchanged parameters.
 
     """
-    ns_match = re.search(r"^Ns.+", "\n".join(settings))
+    ns_match = re.search(r"^Ns.+", "\n".join(settings), re.MULTILINE)
     if ns_match:
         return ["Ns"] + params
     return params
@@ -315,7 +315,7 @@ def _geis_params(settings: list[str]) -> list[str]:
         "corr",
     ]
     params = _prepend_ns(settings, params)
-    lim_nb_match = re.search(r"^lim_nb\s+(?P<val>.+)", "\n".join(settings))
+    lim_nb_match = re.search(r"^lim_nb\s+(?P<val>.+)", "\n".join(settings), re.MULTILINE)
     if lim_nb_match:
         lim_nb = int(max(lim_nb_match["val"].split()))
         params.append("lim_nb")
@@ -487,7 +487,7 @@ def _mb_params(settings: list[str]) -> list[str]:
         "charge/discharge",
     ]
     params = _prepend_ns(settings, params)
-    n1_match = re.search(r"^N1\s+", "\n".join(settings))
+    n1_match = re.search(r"^N1\s+", "\n".join(settings), re.MULTILINE)
     if n1_match:
         n1 = [
             "charge/discharge_1",
@@ -507,7 +507,7 @@ def _mb_params(settings: list[str]) -> list[str]:
         "ctrl_Na",
         "ctrl_corr",
     ]
-    lim_nb_match = re.search(r"^lim_nb\s+(?P<val>.+)", "\n".join(settings))
+    lim_nb_match = re.search(r"^lim_nb\s+(?P<val>.+)", "\n".join(settings), re.MULTILINE)
     if lim_nb_match:
         lim_nb = int(max(lim_nb_match["val"].split()))
         params.append("lim_nb")
@@ -522,7 +522,7 @@ def _mb_params(settings: list[str]) -> list[str]:
                 f"lim{i}_seq",
             ]
             params += lim
-    rec_nb_match = re.search(r"^rec_nb\s+(?P<val>.+)", "\n".join(settings))
+    rec_nb_match = re.search(r"^rec_nb\s+(?P<val>.+)", "\n".join(settings), re.MULTILINE)
     if rec_nb_match:
         rec_nb = int(max(rec_nb_match["val"].split()))
         params.append("rec_nb")
@@ -684,7 +684,7 @@ _mb_params_dtypes = [
 def _ocv_params(settings: list[str]) -> list[str]:
     """Constructs the parameter names for the OCV technique."""
     params = ["tR", "dER/dt"]
-    record_match = re.search(r"^record.+", "\n".join(settings))
+    record_match = re.search(r"^record.+", "\n".join(settings), re.MULTILINE)
     if record_match:
         params += ["record"]
     params += ["dER", "dtR", "E_range_min", "E_range_max"]
@@ -741,7 +741,7 @@ def _peis_params(settings: list[str]) -> list[str]:
         "corr",
     ]
     params = _prepend_ns(settings, params)
-    lim_nb_match = re.search(r"^lim_nb\s+(?P<val>.+)", "\n".join(settings))
+    lim_nb_match = re.search(r"^lim_nb\s+(?P<val>.+)", "\n".join(settings), re.MULTILINE)
     if lim_nb_match:
         lim_nb = int(max(lim_nb_match["val"].split()))
         params.append("lim_nb")
