@@ -1,3 +1,9 @@
+### *NOTE*
+
+This parser is no longer being maintained. Consider using the `electrochem` parser built into [yadg](https://github.com/dgbowl/yadg) for an up to date version.
+
+---
+
 # eclabfiles
 This is a package to process and convert files from BioLogic's EC-Lab.
 The parsers build on [Chris Kerr's `galvani` package](https://github.com/chatcannon/galvani)
