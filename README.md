@@ -1,8 +1,18 @@
-### *NOTE*
+> [!Important]
+> This parser is no longer being maintained and will likely not work for you. Please use the `eclab` extractor built into [`yadg`](https://github.com/dgbowl/yadg) for a maintained and up to date version.
+>
+> After installing `yadg` (`pip install yadg`)
+>  you can get a NetCDF file by invoking
+> ```bash
+> yadg extract eclab.mpr <filename>
+> ```
+>
+> Alternatively, you can obtain a `DataTree` in Python via
+> ```python
+> import yadg
+> yadg.extractors.extract(filetype="eclab.mpr", path=<filename>)
+> ```
 
-This parser is no longer being maintained. Consider using the `electrochem` parser built into [yadg](https://github.com/dgbowl/yadg) for an up to date version.
-
----
 
 # eclabfiles
 This is a package to process and convert files from BioLogic's EC-Lab.
